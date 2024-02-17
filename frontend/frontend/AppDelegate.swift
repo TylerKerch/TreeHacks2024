@@ -1,12 +1,6 @@
-//
-//  AppDelegate.swift
-//  frontend
-//
-//  Created by Samuel Yuan on 2/17/24.
-//
-
 import Cocoa
 import AVFoundation
+import Speech
 
 @main
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -14,6 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var menuBarController: MenuBarController!
     let audioEngine = AVAudioEngine()
     var outputFile: AVAudioFile? = nil
+    let outputURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("out.caf")
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Initialize the menu bar controller when the app finishes launching
@@ -23,25 +18,41 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             mainWindow.close()
         }
         
-        // Start recording audio
-        startRecordingAudio()
+        requestPermissions { [weak self] granted in
+            guard granted else {
+                print("Permissions not granted")
+                return
+            }
+            
+            self?.setupAudioRecording()
+            
+            // Stop recording after 5 seconds and then transcribe
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+                self?.stopRecordingAudio()
+                self?.transcribeAudio()
+            }
+        }
     }
     
-    func startRecordingAudio() {
-        // Ensure the app has permission to use the microphone
-        switch AVCaptureDevice.authorizationStatus(for: .audio) {
-        case .authorized: // The user has previously granted access to the microphone.
-            setupAudioRecording()
-        case .notDetermined: // The user has not yet been asked for microphone access.
-            AVCaptureDevice.requestAccess(for: .audio) { granted in
-                if granted {
-                    DispatchQueue.main.async {
-                        self.setupAudioRecording()
-                    }
-                }
-            }
-        default: // The user has previously denied access.
-            return
+    func requestPermissions(completion: @escaping (Bool) -> Void) {
+        let dispatchGroup = DispatchGroup()
+        var micAccess = false
+        var speechAccess = false
+        
+        dispatchGroup.enter()
+        AVCaptureDevice.requestAccess(for: .audio) { granted in
+            micAccess = granted
+            dispatchGroup.leave()
+        }
+        
+        dispatchGroup.enter()
+        SFSpeechRecognizer.requestAuthorization { status in
+            speechAccess = status == .authorized
+            dispatchGroup.leave()
+        }
+        
+        dispatchGroup.notify(queue: .main) {
+            completion(micAccess && speechAccess)
         }
     }
     
@@ -50,9 +61,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let bus = 0
         let inputFormat = input.inputFormat(forBus: bus)
 
-        let outputURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("out.caf")
         print("writing to \(outputURL)")
-
         do {
             outputFile = try AVAudioFile(forWriting: outputURL, settings: inputFormat.settings, commonFormat: inputFormat.commonFormat, interleaved: inputFormat.isInterleaved)
 
@@ -82,6 +91,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         outputFile = nil
     }
     
+    func transcribeAudio() {
+        guard let recognizer = SFSpeechRecognizer() else {
+            print("Speech recognition is not available for the current locale.")
+            return
+        }
+        
+        let request = SFSpeechURLRecognitionRequest(url: outputURL)
+        recognizer.recognitionTask(with: request) { result, error in
+            guard let result = result else {
+                print("There was an error: \(error?.localizedDescription ?? "Unknown error")")
+                return
+            }
+            
+            if result.isFinal {
+                let transcription = result.bestTranscription.formattedString
+                print("Transcription: \(transcription)")
+            }
+        }
+    }
+    
     @objc func readScreen() {
         // Code to read screen content goes here
     }
@@ -100,4 +129,3 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 
 }
-
