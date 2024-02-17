@@ -11,6 +11,9 @@
 		7E379F342B814E8000E62BA3 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E379F332B814E8000E62BA3 /* ViewController.swift */; };
 		7E379F362B814E8200E62BA3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7E379F352B814E8200E62BA3 /* Assets.xcassets */; };
 		7E379F392B814E8200E62BA3 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7E379F372B814E8200E62BA3 /* Main.storyboard */; };
+		7E379F432B814FDE00E62BA3 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E379F422B814FDE00E62BA3 /* MenuBarController.swift */; };
+		7E379F462B81504700E62BA3 /* ScreenReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E379F452B81504700E62BA3 /* ScreenReader.swift */; };
+		7E379F492B81506300E62BA3 /* CursorController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E379F482B81506300E62BA3 /* CursorController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -20,7 +23,10 @@
 		7E379F352B814E8200E62BA3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7E379F382B814E8200E62BA3 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		7E379F3A2B814E8200E62BA3 /* frontend.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = frontend.entitlements; sourceTree = "<group>"; };
-		FF8E5A102B8150A800E2A668 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		7E379F402B814ED400E62BA3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		7E379F422B814FDE00E62BA3 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
+		7E379F452B81504700E62BA3 /* ScreenReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenReader.swift; sourceTree = "<group>"; };
+		7E379F482B81506300E62BA3 /* CursorController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -53,7 +59,10 @@
 		7E379F302B814E8000E62BA3 /* frontend */ = {
 			isa = PBXGroup;
 			children = (
-				FF8E5A102B8150A800E2A668 /* Info.plist */,
+				7E379F472B81505200E62BA3 /* CursorControl */,
+				7E379F442B81503C00E62BA3 /* ScreenReader */,
+				7E379F412B814F7E00E62BA3 /* MenuBar */,
+				7E379F402B814ED400E62BA3 /* Info.plist */,
 				7E379F312B814E8000E62BA3 /* AppDelegate.swift */,
 				7E379F332B814E8000E62BA3 /* ViewController.swift */,
 				7E379F352B814E8200E62BA3 /* Assets.xcassets */,
@@ -61,6 +70,30 @@
 				7E379F3A2B814E8200E62BA3 /* frontend.entitlements */,
 			);
 			path = frontend;
+			sourceTree = "<group>";
+		};
+		7E379F412B814F7E00E62BA3 /* MenuBar */ = {
+			isa = PBXGroup;
+			children = (
+				7E379F422B814FDE00E62BA3 /* MenuBarController.swift */,
+			);
+			path = MenuBar;
+			sourceTree = "<group>";
+		};
+		7E379F442B81503C00E62BA3 /* ScreenReader */ = {
+			isa = PBXGroup;
+			children = (
+				7E379F452B81504700E62BA3 /* ScreenReader.swift */,
+			);
+			path = ScreenReader;
+			sourceTree = "<group>";
+		};
+		7E379F472B81505200E62BA3 /* CursorControl */ = {
+			isa = PBXGroup;
+			children = (
+				7E379F482B81506300E62BA3 /* CursorController.swift */,
+			);
+			path = CursorControl;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -133,7 +166,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7E379F462B81504700E62BA3 /* ScreenReader.swift in Sources */,
 				7E379F342B814E8000E62BA3 /* ViewController.swift in Sources */,
+				7E379F492B81506300E62BA3 /* CursorController.swift in Sources */,
+				7E379F432B814FDE00E62BA3 /* MenuBarController.swift in Sources */,
 				7E379F322B814E8000E62BA3 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -284,11 +320,13 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = frontend/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "\"This app needs to use your microphone\"";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs to access your microphone to record audio input.";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "\"This app needs to record audio\"";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "This app needs to access the audio recorded by the microphone.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -316,11 +354,13 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = frontend/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
+				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "\"This app needs to use your microphone\"";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "This app needs to access your microphone to record audio input.";
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "\"This app needs to record audio\"";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "This app needs to access the audio recorded by the microphone.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
