@@ -3,7 +3,6 @@ import Cocoa
 class MenuBarController {
     private var statusItem: NSStatusItem
     
-    
     init() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         

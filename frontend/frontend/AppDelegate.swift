@@ -1,10 +1,3 @@
-//
-//  AppDelegate.swift
-//  frontend
-//
-//  Created by Samuel Yuan on 2/17/24.
-//
-
 import Cocoa
 import HotKey
 
@@ -12,11 +5,13 @@ import HotKey
 class AppDelegate: NSObject, NSApplicationDelegate {
 
     var menuBarController: MenuBarController!
+    var voiceRecorder: VoiceRecorder!
     var hotKey: HotKey?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Initialize the menu bar controller when the app finishes launching
         menuBarController = MenuBarController()
+        voiceRecorder = VoiceRecorder()
         
         if let mainWindow = NSApplication.shared.windows.first {
             mainWindow.close()
@@ -27,7 +22,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             ScreenReader.readScreenContents()
         }
     }
-
+    
     func applicationWillTerminate(_ aNotification: Notification) {
         // Insert code here to tear down your application
     }
@@ -35,7 +30,4 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
         return true
     }
-
-
 }
-
