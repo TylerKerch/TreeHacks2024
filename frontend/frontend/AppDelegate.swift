@@ -6,13 +6,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     var menuBarController: MenuBarController!
     var voiceRecorder: VoiceRecorder!
+    var textReader: TextReader!
+    
     var hotKeyScreenReader: HotKey?
     var hotKeyVoiceRecorder: HotKey?
+    var hotKeyTextReader: HotKey?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Initialize the menu bar controller when the app finishes launching
         menuBarController = MenuBarController()
         voiceRecorder = VoiceRecorder()
+        textReader = TextReader()
         
         if let mainWindow = NSApplication.shared.windows.first {
             mainWindow.close()
@@ -29,6 +33,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         hotKeyVoiceRecorder?.keyUpHandler = {
             self.voiceRecorder.stopRecording()
+            // Fill in API logic to fetch string
+            self.textReader.readText(s: "I CAN HELP YOU WITH THAT OLD MAN")
         }
     }
     

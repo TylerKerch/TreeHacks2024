@@ -1,3 +1,10 @@
+//
+//  TextReader.swift
+//  frontend
+//
+//  Created by Sarvesh Phoenix on 2/17/24.
+//
+
 import Cocoa
 import AVFoundation
 import Speech

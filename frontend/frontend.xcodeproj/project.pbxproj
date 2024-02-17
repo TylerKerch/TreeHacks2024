@@ -16,6 +16,7 @@
 		7E379F492B81506300E62BA3 /* CursorController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E379F482B81506300E62BA3 /* CursorController.swift */; };
 		7E379F4D2B816DCD00E62BA3 /* HotKey in Frameworks */ = {isa = PBXBuildFile; productRef = 7E379F4C2B816DCD00E62BA3 /* HotKey */; };
 		7E379F502B8171C900E62BA3 /* VoiceRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E379F4F2B8171C900E62BA3 /* VoiceRecorder.swift */; };
+		FF8E5A122B817AA900E2A668 /* TextReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF8E5A112B817AA900E2A668 /* TextReader.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,6 +31,7 @@
 		7E379F452B81504700E62BA3 /* ScreenReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenReader.swift; sourceTree = "<group>"; };
 		7E379F482B81506300E62BA3 /* CursorController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorController.swift; sourceTree = "<group>"; };
 		7E379F4F2B8171C900E62BA3 /* VoiceRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceRecorder.swift; sourceTree = "<group>"; };
+		FF8E5A112B817AA900E2A668 /* TextReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextReader.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,7 +65,7 @@
 		7E379F302B814E8000E62BA3 /* frontend */ = {
 			isa = PBXGroup;
 			children = (
-				7E379F4E2B8171A800E62BA3 /* VoiceRecorder */,
+				7E379F4E2B8171A800E62BA3 /* AudioControl */,
 				7E379F472B81505200E62BA3 /* CursorControl */,
 				7E379F442B81503C00E62BA3 /* ScreenReader */,
 				7E379F412B814F7E00E62BA3 /* MenuBar */,
@@ -109,12 +111,13 @@
 			path = icon;
 			sourceTree = "<group>";
 		};
-		7E379F4E2B8171A800E62BA3 /* VoiceRecorder */ = {
+		7E379F4E2B8171A800E62BA3 /* AudioControl */ = {
 			isa = PBXGroup;
 			children = (
 				7E379F4F2B8171C900E62BA3 /* VoiceRecorder.swift */,
+				FF8E5A112B817AA900E2A668 /* TextReader.swift */,
 			);
-			path = VoiceRecorder;
+			path = AudioControl;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -198,6 +201,7 @@
 				7E379F502B8171C900E62BA3 /* VoiceRecorder.swift in Sources */,
 				7E379F492B81506300E62BA3 /* CursorController.swift in Sources */,
 				7E379F432B814FDE00E62BA3 /* MenuBarController.swift in Sources */,
+				FF8E5A122B817AA900E2A668 /* TextReader.swift in Sources */,
 				7E379F322B814E8000E62BA3 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
