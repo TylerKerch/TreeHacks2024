@@ -7,8 +7,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     var menuBarController: MenuBarController!
     let audioEngine = AVAudioEngine()
-    var outputFile: AVAudioFile? = nil
-    let outputURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("out.caf")
+    var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
+    var recognitionTask: SFSpeechRecognitionTask?
+    let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Initialize the menu bar controller when the app finishes launching
@@ -23,92 +24,73 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 print("Permissions not granted")
                 return
             }
-            
-            self?.setupAudioRecording()
-            
-            // Stop recording after 5 seconds and then transcribe
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-                self?.stopRecordingAudio()
-                self?.transcribeAudio()
-            }
+            self?.startTranscribing()
         }
     }
     
     func requestPermissions(completion: @escaping (Bool) -> Void) {
-        let dispatchGroup = DispatchGroup()
-        var micAccess = false
-        var speechAccess = false
-        
-        dispatchGroup.enter()
+        var isMicrophoneAuthorized = false
+        var isSpeechAuthorized = false
+
         AVCaptureDevice.requestAccess(for: .audio) { granted in
-            micAccess = granted
-            dispatchGroup.leave()
-        }
-        
-        dispatchGroup.enter()
-        SFSpeechRecognizer.requestAuthorization { status in
-            speechAccess = status == .authorized
-            dispatchGroup.leave()
-        }
-        
-        dispatchGroup.notify(queue: .main) {
-            completion(micAccess && speechAccess)
-        }
-    }
-    
-    func setupAudioRecording() {
-        let input = audioEngine.inputNode
-        let bus = 0
-        let inputFormat = input.inputFormat(forBus: bus)
+            isMicrophoneAuthorized = granted
 
-        print("writing to \(outputURL)")
-        do {
-            outputFile = try AVAudioFile(forWriting: outputURL, settings: inputFormat.settings, commonFormat: inputFormat.commonFormat, interleaved: inputFormat.isInterleaved)
+            SFSpeechRecognizer.requestAuthorization { authStatus in
+                isSpeechAuthorized = (authStatus == .authorized)
 
-            input.installTap(onBus: bus, bufferSize: 512, format: inputFormat) { (buffer, time) in
-                do {
-                    try self.outputFile?.write(from: buffer)
-                } catch {
-                    print("Error writing audio data: \(error)")
+                DispatchQueue.main.async {
+                    completion(isMicrophoneAuthorized && isSpeechAuthorized)
                 }
             }
-
-            try audioEngine.start()
-        } catch {
-            print("Could not start audio engine: \(error)")
-        }
-
-        // Example: Stop recording after 5 seconds (adjust as needed)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
-            self.stopRecordingAudio()
         }
     }
     
-    func stopRecordingAudio() {
-        print("Finish recording")
-        audioEngine.stop()
-        audioEngine.inputNode.removeTap(onBus: 0)
-        outputFile = nil
-    }
-    
-    func transcribeAudio() {
-        guard let recognizer = SFSpeechRecognizer() else {
-            print("Speech recognition is not available for the current locale.")
+    func startTranscribing() {
+        guard let recognizer = speechRecognizer, recognizer.isAvailable else {
+            print("Speech recognition not available.")
             return
         }
-        
-        let request = SFSpeechURLRecognitionRequest(url: outputURL)
-        recognizer.recognitionTask(with: request) { result, error in
-            guard let result = result else {
-                print("There was an error: \(error?.localizedDescription ?? "Unknown error")")
-                return
+
+        recognitionRequest = SFSpeechAudioBufferRecognitionRequest()
+        guard let recognitionRequest = recognitionRequest else {
+            fatalError("Unable to create a SFSpeechAudioBufferRecognitionRequest object")
+        }
+        recognitionRequest.shouldReportPartialResults = true
+
+        recognitionTask = recognizer.recognitionTask(with: recognitionRequest) { result, error in
+            var isFinal = false
+
+            if let result = result {
+                print("Transcription: \(result.bestTranscription.formattedString)")
+                isFinal = result.isFinal
             }
-            
-            if result.isFinal {
-                let transcription = result.bestTranscription.formattedString
-                print("Transcription: \(transcription)")
+
+            if error != nil || isFinal {
+                self.audioEngine.stop()
+                self.audioEngine.inputNode.removeTap(onBus: 0)
+                self.recognitionRequest = nil
+                self.recognitionTask = nil
             }
         }
+
+        let inputNode = audioEngine.inputNode
+        let recordingFormat = inputNode.outputFormat(forBus: 0)
+        inputNode.installTap(onBus: 0, bufferSize: 512, format: recordingFormat) { buffer, _ in
+            recognitionRequest.append(buffer)
+        }
+
+        do {
+            try audioEngine.start()
+        } catch {
+            print("audioEngine couldn't start because of an error: \(error)")
+        }
+    }
+    
+    func stopTranscribing() {
+        audioEngine.stop()
+        audioEngine.inputNode.removeTap(onBus: 0)
+        recognitionRequest?.endAudio()
+        recognitionTask?.cancel()
     }
     
     @objc func readScreen() {
