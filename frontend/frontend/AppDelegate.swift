@@ -6,11 +6,13 @@
 //
 
 import Cocoa
+import HotKey
 
 @main
 class AppDelegate: NSObject, NSApplicationDelegate {
 
     var menuBarController: MenuBarController!
+    var hotKey: HotKey?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Initialize the menu bar controller when the app finishes launching
@@ -19,16 +21,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let mainWindow = NSApplication.shared.windows.first {
             mainWindow.close()
         }
-
-    }
-    
-    
-    @objc func readScreen() {
-        // Code to read screen content goes here
-    }
-
-    @objc func moveCursor() {
-        // Code to move cursor goes here
+        
+        hotKey = HotKey(key: .k, modifiers: [.command, .shift])
+        hotKey?.keyDownHandler = {
+            ScreenReader.readScreenContents()
+        }
     }
 
     func applicationWillTerminate(_ aNotification: Notification) {
