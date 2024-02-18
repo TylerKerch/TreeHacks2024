@@ -126,7 +126,7 @@ func processMessage() error {
 			go ReindexImage(incomingMessage.Payload)
 			return nil
 		case VOICE_OVER:
-			go ReindexImage(incomingMessage.Payload)
+			// go ReindexImage(incomingMessage.Payload)
 			voiceMessage := ImageDescription(incomingMessage.Payload)
 			go writeBack(VOICE_OVER, voiceMessage)
 			return nil
