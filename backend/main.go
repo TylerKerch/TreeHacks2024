@@ -1,16 +1,17 @@
 package main
 
 import (
-	// "bytes"
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-
-	// "io"
+	"io"
+	"time"
 	"log"
 	"net/http"
+	"os"
+	"treehacks/backend/constants"
 
 	"github.com/gorilla/websocket"
 	"github.com/lpernett/godotenv"
@@ -37,13 +38,17 @@ type MessageContents struct {
 const (
 	SCREENSHOT           = "IMAGE"
 	QUERY                = "QUERY"
-	CLEAR_BOUNDING_BOXES = "C"
-	VOICE_OVER           = "VOICE"
+	CLEAR_BOUNDING_BOXES = "CLEAR"
+	VOICE_OVER           = "SPEAK"
 	DRAW_BOXES           = "DRAW"
 
 	// Internal
 	REINDEX = "REI"
 	NOTHING = "NONE"
+
+	//Image Description
+	GPT4V_MODEL_ENGINE = "gpt-4-vision-preview"
+	GPT4V_OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 )
 
 var sess *session.Session
@@ -92,7 +97,7 @@ func processMessage(conn *websocket.Conn) error {
 			return err
 		}
 
-		// startTime := time.Now()
+		startTime := time.Now()
 
 		result, err := sagemakerClient.InvokeEndpoint(&sagemakerruntime.InvokeEndpointInput{
 			Body:         decodedBytes,
@@ -103,8 +108,8 @@ func processMessage(conn *websocket.Conn) error {
 			return errors.New("failed to call Sagemaker (CLIP) endpoint")
 		}
 
-		// elapsedTime := time.Since(startTime)
-		// fmt.Printf("The function took %s to execute.\n", elapsedTime)
+		elapsedTime := time.Since(startTime)
+		fmt.Printf("The function took %s to execute.\n", elapsedTime)
 
 		log.Println("Request finished")
 
@@ -143,6 +148,87 @@ func processMessage(conn *websocket.Conn) error {
 
 	return err
 }
+// ConvertImageToBase64 takes the path of an image file and returns its base64 encoded string.
+func ConvertImageToBase64(imagePath string) (string, error) {
+	// Read the file into a byte slice
+	imageBytes, err := os.ReadFile(imagePath)
+	if err != nil {
+		return "", err
+	}
+
+	// Encode the byte slice to base64
+	base64Image := base64.StdEncoding.EncodeToString(imageBytes)
+
+	return base64Image, nil
+}
+
+func imageDescription(base64_image string) string {
+	context := constants.CONTEXT
+	prompt := "What's in this image?"
+	maxTokens := 2048
+	var headers = map[string]string{
+		"Authorization": "Bearer " + os.Getenv("OPEN_AI_API_KEY"),
+		"Content-Type":  "application/json",
+	}
+
+	data := map[string]interface{}{
+		"model": GPT4V_MODEL_ENGINE,
+		"messages": []map[string]interface{}{
+			{"role": "system", "content": context},
+			{"role": "user", "content": []map[string]string{
+				{"type": "text", "text": prompt},
+				{"type": "image_url", "image_url": "data:image/jpeg;base64,"+base64_image},
+			}},
+		},
+		"max_tokens": maxTokens,
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println("Error encoding JSON:", err)
+		return ""
+	}
+
+	req, err := http.NewRequest("POST", GPT4V_OPENAI_URL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return ""
+	}
+
+	for key, value := range headers {
+		req.Header.Add(key, value)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error making request:", err)
+		return ""
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return ""
+	}
+	type ApiResponse struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+    var apiResponse ApiResponse
+    if err := json.Unmarshal(body, &apiResponse); err != nil {
+        fmt.Println("Error unmarshaling response body:", err)
+        return ""
+    }
+
+	content := apiResponse.Choices[0].Message.Content
+	fmt.Println("Content:", content)
+	return content
+}
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil) // Upgrade the connection to a WebSocket.
@@ -166,7 +252,7 @@ func main() {
 	if err != nil {
 		panic("Environment variable(s) couldn't be loaded")
 	}
-
+	
 	var access_token = os.Getenv("ACCESS_TOKEN")
 	var secret_access_token = os.Getenv("SECRET_ACCESS_TOKEN")
 
