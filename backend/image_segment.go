@@ -49,7 +49,7 @@ func cropImage(img image.Image, rect image.Rectangle) (image.Image, error) {
 type TagBoxesPayload struct {
 	ImageBase64 string       `json:"image_base64"`
 	TextQuery   string       `json:"text_query"`
-	Predictions []Prediction `json:"predictions"`
+	Predictions []BoundingBox `json:"predictions"`
 }
 
 type TagBoxesResponse struct {
@@ -66,12 +66,12 @@ type CLIPPrediction struct {
 	Similarity  string  `json:"similarity"`
 }
 
-func tagImageBoxes(b64image string, predictions []Prediction) ([]CLIPPrediction, error) {
+func tagImageBoxes(b64image string, textQuery string) ([]CLIPPrediction, error) {
 	// Construct the payload
 	payload := TagBoxesPayload{
 		ImageBase64: b64image,
-		TextQuery:   "Where is the search bar?",
-		Predictions: predictions,
+		TextQuery:   textQuery,
+		Predictions: boundingBoxes,
 	}
 
 	// Marshal the payload into JSON
