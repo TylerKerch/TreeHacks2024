@@ -14,7 +14,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var hotKeyVoiceRecorder: HotKey?
     var hotKeyTextReader: HotKey?
     
+    var socket: ClientSocket!
     var gifWindowController: GifWindowController?
+    var readScreenContentsTimer: Timer?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Initialize the menu bar controller when the app finishes launching
@@ -24,11 +26,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         screenPainter = ScreenPainter()
         textSpeaker = TextSpeaker()
         
-        var socket = ClientSocket(painter: screenPainter, speaker: textSpeaker)
+        socket = ClientSocket(painter: screenPainter, speaker: textSpeaker)
         
         if let mainWindow = NSApplication.shared.windows.first {
             mainWindow.close()
         }
+        
+        // UNCOMMENT WHEN WE START CONNECTING W LOCALHOST
+//        scheduleScreenshotTimer()
         
         hotKeyVoiceRecorder = HotKey(key: .grave, modifiers: [])
         hotKeyVoiceRecorder?.keyDownHandler = {
@@ -42,14 +47,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         hotKeyVoiceRecorder?.keyUpHandler = {
             let query = self.voiceRecorder.stopRecording()
-            let image = self.screenReader.readScreenContents()
-            socket.sendUIBoxesRequest(imageBase64: image, query: query)
+            self.socket.sendPacket(type: "QUERY", s: query)
             
             self.gifWindowController?.close()
             self.gifWindowController = nil
         }
         
         preloadGif()
+    }
+    
+    func scheduleScreenshotTimer() {
+        readScreenContentsTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
+            let image = self?.screenReader.readScreenContents()
+            guard let unwrappedImage = image else {
+                print("Could not unwrap image")
+                return
+            }
+            self?.socket.sendPacket(type: "IMAGE", s: unwrappedImage)
+        }
     }
     
     func applicationWillTerminate(_ aNotification: Notification) {

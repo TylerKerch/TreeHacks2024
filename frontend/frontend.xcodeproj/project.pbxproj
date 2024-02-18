@@ -23,6 +23,7 @@
 		FF8E5A152B81937900E2A668 /* ClientSocket.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF8E5A142B81937900E2A668 /* ClientSocket.swift */; };
 		FF8E5A182B8194B300E2A668 /* Starscream in Frameworks */ = {isa = PBXBuildFile; productRef = FF8E5A172B8194B300E2A668 /* Starscream */; };
 		FF8E5A1A2B81AE7900E2A668 /* TextSpeaker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF8E5A192B81AE7900E2A668 /* TextSpeaker.swift */; };
+		FF8E5A1C2B81C34700E2A668 /* SocketModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF8E5A1B2B81C34700E2A668 /* SocketModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,7 @@
 		7E379F572B819CFA00E62BA3 /* NSImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSImageView.swift; sourceTree = "<group>"; };
 		FF8E5A142B81937900E2A668 /* ClientSocket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientSocket.swift; sourceTree = "<group>"; };
 		FF8E5A192B81AE7900E2A668 /* TextSpeaker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextSpeaker.swift; sourceTree = "<group>"; };
+		FF8E5A1B2B81C34700E2A668 /* SocketModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocketModels.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -141,6 +143,7 @@
 			isa = PBXGroup;
 			children = (
 				FF8E5A142B81937900E2A668 /* ClientSocket.swift */,
+				FF8E5A1B2B81C34700E2A668 /* SocketModels.swift */,
 			);
 			path = ServerConnection;
 			sourceTree = "<group>";
@@ -226,6 +229,7 @@
 			files = (
 				7E379F462B81504700E62BA3 /* ScreenReader.swift in Sources */,
 				7E379F542B819A1700E62BA3 /* AudioInputModal.swift in Sources */,
+				FF8E5A1C2B81C34700E2A668 /* SocketModels.swift in Sources */,
 				7E379F342B814E8000E62BA3 /* ViewController.swift in Sources */,
 				7E379F502B8171C900E62BA3 /* VoiceRecorder.swift in Sources */,
 				7E379F492B81506300E62BA3 /* CursorController.swift in Sources */,
