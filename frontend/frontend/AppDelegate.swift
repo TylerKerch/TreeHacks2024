@@ -6,8 +6,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     var menuBarController: MenuBarController!
     var voiceRecorder: VoiceRecorder!
+    var screenReader: ScreenReader!
     var screenPainter: ScreenPainter!
-    var textReader: TextReader!
+    var textSpeaker: TextSpeaker!
     
     var hotKeyScreenReader: HotKey?
     var hotKeyVoiceRecorder: HotKey?
@@ -19,18 +20,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Initialize the menu bar controller when the app finishes launching
         menuBarController = MenuBarController()
         voiceRecorder = VoiceRecorder()
+        screenReader = ScreenReader()
         screenPainter = ScreenPainter()
-        textReader = TextReader()
+        textSpeaker = TextSpeaker()
+        
+        var socket = ClientSocket(painter: screenPainter, speaker: textSpeaker)
         
         if let mainWindow = NSApplication.shared.windows.first {
             mainWindow.close()
-        }
-        
-        hotKeyScreenReader = HotKey(key: .k, modifiers: [.command, .shift])
-        hotKeyScreenReader?.keyDownHandler = {
-            self.screenPainter.addOverlay(x: 50, y: 50, height: 200, width: 500, number: 1, caption: "Print Icon")
-            self.screenPainter.addOverlay(x: 450, y: 450, height: 200, width: 500, number: 2, caption: "Save Icon")
-            self.screenPainter.addOverlay(x: 850, y: 850, height: 200, width: 500, number: 3, caption: "Eat chicken rice")
         }
         
         hotKeyVoiceRecorder = HotKey(key: .grave, modifiers: [])
@@ -42,10 +39,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             self.gifWindowController?.showWindow(nil)
         }
+        
         hotKeyVoiceRecorder?.keyUpHandler = {
-            self.voiceRecorder.stopRecording()
-            // Fill in API logic to fetch string
-//            self.textReader.readText(s: "I CAN HELP YOU WITH THAT OLD MAN")
+            let query = self.voiceRecorder.stopRecording()
+            let image = self.screenReader.readScreenContents()
+            socket.sendUIBoxesRequest(imageBase64: image, query: query)
+            
             self.gifWindowController?.close()
             self.gifWindowController = nil
         }
