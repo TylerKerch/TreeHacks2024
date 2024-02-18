@@ -1,17 +1,14 @@
 package main
 
 import (
-	// "bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-	"time"
-
-	// "io"
 	"log"
 	"net/http"
+	"os"
+	"time"
 
 	"bytes"
 	"io"
@@ -48,13 +45,18 @@ const (
 	// Internal
 	REINDEX = "REI"
 	NOTHING = "NONE"
+
+	//Image Description
+	GPT4V_MODEL_ENGINE = "gpt-4-vision-preview"
+	GPT4V_OPENAI_URL   = "https://api.openai.com/v1/chat/completions"
 )
 
 var sess *session.Session
 var sagemakerClient *sagemakerruntime.SageMakerRuntime
 var previousEmbedding []float64 = nil
+var conn *websocket.Conn
 
-func writeBack(conn *websocket.Conn, message string, payload string) {
+func writeBack(message string, payload string) {
 	// m := "test"
 
 	// conn.WriteMessage(messageType, m)
@@ -87,15 +89,7 @@ func ReindexImage(payload string) {
 	println(string(body))
 }
 
-func GenerateVoiceover(payload string) string {
-	// get voiceover from GPT4
-
-	// goroutine that fires a message over the network
-
-	return ""
-}
-
-func processMessage(conn *websocket.Conn) error {
+func processMessage() error {
 	wsMessageType, message, err := conn.ReadMessage() // Read a message from the WebSocket.
 	if err != nil {
 		return err
@@ -141,15 +135,13 @@ func processMessage(conn *websocket.Conn) error {
 		}
 		embedding = Normalize(embedding)
 
-		next_action := NOTHING
-
-		if previousEmbedding == nil {
-			next_action = VOICE_OVER
-		} else {
+		next_action := VOICE_OVER
+		if previousEmbedding != nil {
 			next_action = CompareVectors(previousEmbedding, embedding)
 		}
 
 		previousEmbedding = embedding
+
 		log.Println(next_action)
 
 		switch next_action {
@@ -160,8 +152,8 @@ func processMessage(conn *websocket.Conn) error {
 			return nil
 		case VOICE_OVER:
 			go ReindexImage(incomingMessage.Payload)
-			voiceMessage := GenerateVoiceover(incomingMessage.Payload)
-			go writeBack(conn, VOICE_OVER, voiceMessage)
+			voiceMessage := ImageDescription(incomingMessage.Payload)
+			go writeBack(VOICE_OVER, voiceMessage)
 			return nil
 		}
 	case QUERY:
@@ -172,15 +164,17 @@ func processMessage(conn *websocket.Conn) error {
 }
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil) // Upgrade the connection to a WebSocket.
+	connection, err := upgrader.Upgrade(w, r, nil) // Upgrade the connection to a WebSocket.
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	defer conn.Close()
+	defer connection.Close()
+
+	conn = connection
 
 	for {
-		err = processMessage(conn)
+		err = processMessage()
 
 		if err != nil {
 			log.Print(err)
