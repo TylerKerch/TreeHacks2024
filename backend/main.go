@@ -54,6 +54,7 @@ const (
 var sess *session.Session
 var sagemaker_client *sagemakerruntime.SageMakerRuntime
 var previous_embedding []float64 = nil
+var previous_action string
 var conn *websocket.Conn
 var current_screen_image string
 
@@ -127,6 +128,7 @@ func processMessage() error {
 		}
 
 		previous_embedding = embedding
+		previous_action = next_action
 
 		switch next_action {
 		case NOTHING:
@@ -158,6 +160,11 @@ func processMessage() error {
 				case <-step_channel:
 					return
 				default:
+					if previous_action == NOTHING {
+						time.Sleep(1 * time.Second)
+						continue
+					}
+
 					// Event loop
 					nextStep := GetQueryNextStep(QueryNextStepContext{
 						CurrentStep:          current_step_count,
@@ -169,7 +176,7 @@ func processMessage() error {
 					text := nextStep.Text
 
 					// We're done.
-					if text == "LAST STEP" {
+					if text == "LAST STEP" || current_step_count > 10 {
 						step_channel <- true
 						continue
 					}
@@ -178,8 +185,8 @@ func processMessage() error {
 
 					writeBack(VOICE_OVER, nextStep.Audio)
 					current_context_window += "\n" + nextStep.Text
-					log.Println(current_context_window)
 					current_step_count++
+					// log.Println(current_context_window)
 				}
 			}
 		}()
