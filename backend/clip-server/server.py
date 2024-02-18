@@ -14,6 +14,39 @@ model_name = "openai/clip-vit-base-patch32"
 model = CLIPModel.from_pretrained(model_name)
 processor = CLIPProcessor.from_pretrained(model_name)
 
+
+@app.route('/tag-image', methods=['POST'])
+def tag_image():
+    data = request.json
+
+    if 'image_base64' not in data:
+        return "No image provided", 400
+
+    image_base64 = data['image_base64']
+
+    try:
+        # Decode the Base64 encoded image
+        image_data = base64.b64decode(image_base64)
+        image = Image.open(io.BytesIO(image_data))
+
+        # Process the image for CLIP
+        inputs = processor(images=image, return_tensors="pt")
+
+        # Generate the embedding
+        with torch.no_grad():
+            embeddings = model.get_image_features(**inputs)
+
+        # Convert embedding tensor to list for JSON serialization
+        embeddings_list = embeddings.tolist()
+
+        # Return the embeddings as JSON
+        print(embeddings_list)
+        return jsonify({"embedding": embeddings_list})
+
+    except Exception as e:
+        return str(e), 500
+
+
 @app.route('/process-image', methods=['POST'])
 def process_image():
     data = request.json

@@ -1,11 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -52,7 +53,6 @@ const (
 	FRESH_CONTEXT_WINDOW = "You are a tool that aides the elderly in navigating their computers by helping them fulfill a goal (like 'watching a video about cats') by suggesting a next step. Your goal is to only output the next step towards reaching the final screen. Currently, your goal is to assist the user with this query that they've provided: GLOBAL_QUERY. If you have reached the final screen (that is, there isn't an action the user needs to take), say 'LAST STEP'. Below is the context of the task including steps that have been taken. CONTEXT: "
 )
 
-var sess *session.Session
 var sagemaker_client *sagemakerruntime.SageMakerRuntime
 var previous_embedding []float64 = nil
 var conn *websocket.Conn
@@ -78,28 +78,58 @@ func writeBack(messageType string, payload string) {
 	}
 }
 
-func tagImage(imgBytes []byte) ([]float64, error) {
+type TagPayload struct {
+	ImageBase64 string `json:"image_base64"`
+}
+
+type TagResponse struct {
+	Embedding []float64 `json:"embedding"`
+}
+
+func tagImage(b64image string) ([]float64, error) {
 	startTime := time.Now()
-	result, err := sagemaker_client.InvokeEndpoint(&sagemakerruntime.InvokeEndpointInput{
-		Body:         imgBytes,
-		EndpointName: aws.String("clip-image-model-2023-02-11-06-16-48-670"),
-		ContentType:  aws.String("application/x-image"),
-	})
-	if err != nil {
-		return nil, errors.New("failed to call Sagemaker (CLIP) endpoint")
+	payload := TagPayload{
+		ImageBase64: b64image,
 	}
+
+	// Marshal the payload into JSON
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	// Make the HTTP POST request
+	resp, err := http.Post("http://localhost:8081/process-image", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	fmt.Println("Response:", string(body))
 
 	elapsedTime := time.Since(startTime)
 	fmt.Printf("The function took %s to execute.\n", elapsedTime)
 
 	log.Println("Request finished")
 
-	embedding, err := ConvertBodyToVector(result.Body)
+	var embedding TagResponse
+	err = json.Unmarshal(body, &embedding)
 	if err != nil {
-		return nil, errors.New("failed to convert body to vector from (CLIP) model")
+		return nil, errors.New(err.Error())
 	}
-	embedding = Normalize(embedding)
-	return embedding, nil
+
+	// embedding, err := ConvertBodyToVector(result.Body)
+	// if err != nil {
+	// 	return nil, errors.New("failed to convert body to vector from (CLIP) model")
+	// }
+	// embedding = Normalize(embedding)
+	return embedding.Embedding, nil
 }
 
 func processMessage() error {
@@ -130,27 +160,26 @@ func processMessage() error {
 		tagImageBoxes(incomingMessage.Payload, predictions)
 		elapsedTime := time.Since(startTime)
 		fmt.Printf("The function took %s to execute.\n", elapsedTime)
-	
+
 		return nil
 	case SCREENSHOT:
-		current_screen_image = incomingMessage.Payload
-		decodedBytes, err := base64.StdEncoding.DecodeString(incomingMessage.Payload)
-		if err != nil {
-			return err
-		}
+		log.Print("Received screenshot")
 
-		embedding, err := tagImage(decodedBytes)
+		current_screen_image = incomingMessage.Payload
+
+		embedding, err := tagImage(incomingMessage.Payload)
 		if err != nil {
 			return errors.New(err.Error())
 		}
 
 		next_action := VOICE_OVER
+
 		if previous_embedding != nil {
 			next_action = CompareVectors(previous_embedding, embedding)
 		}
-
 		previous_embedding = embedding
 
+		fmt.Printf("Next action: %s\n", next_action)
 		// If we're waiting for a subquery, we can't do anything else.
 		if next_action != NOTHING {
 			difference_detected <- true
@@ -186,7 +215,9 @@ func processMessage() error {
 				case <-step_channel:
 					return
 				default:
+					fmt.Println("Waiting for difference...")
 					<-difference_detected
+					fmt.Println("Difference detected!")
 
 					// Event loop
 					nextStep := GetQueryNextStep(QueryNextStepContext{
@@ -197,6 +228,11 @@ func processMessage() error {
 					})
 
 					text := nextStep.Text
+					err := nextStep.Err
+
+					if err != nil {
+						log.Println(err)
+					}
 
 					// We're done.
 					if text == "LAST STEP" || current_step_count > 10 {
@@ -237,7 +273,9 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	ctx, _ := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	err := godotenv.Load()
 	if err != nil {
 		panic("Environment variable(s) couldn't be loaded")
@@ -274,5 +312,4 @@ func main() {
 	http.ListenAndServe(uri, nil)
 
 	ocrClosePool()
-
 }
