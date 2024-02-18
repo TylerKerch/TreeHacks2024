@@ -29,8 +29,8 @@ type CLIPPrediction struct {
 	Width       float64 `json:"width"`
 	Height      float64 `json:"height"`
 	Class       string  `json:"class"`
-	DetectionId int     `json:"detection_id"`
-	Similarity  float64  `json:"similarity"`
+	DetectionId string  `json:"detection_id"`
+	Similarity  float64 `json:"similarity"`
 }
 
 func tagImageBoxes(b64image string, textQuery string) ([]CLIPPrediction, error) {

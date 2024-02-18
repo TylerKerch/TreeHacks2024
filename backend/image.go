@@ -156,18 +156,19 @@ type ImageData struct {
 
 // Define the struct for each prediction
 type BoundingBox struct {
-	X      float64 `json:"x"`
-	Y      float64 `json:"y"`
-	Width  float64 `json:"width"`
-	Height float64 `json:"height"`
-	Class  string  `json:"class"`
+	X      		float64 `json:"x"`
+	Y      		float64 `json:"y"`
+	Width  		float64 `json:"width"`
+	Height 		float64 `json:"height"`
+	Class  		string  `json:"type"`
+	DetectionId string 	`json:"detection_id"`
 }
 
 // Define the root struct to match the full JSON structure
 type ResponseData struct {
 	Time        float64       `json:"time"`
 	Image       ImageData     `json:"image"`
-	BoundingBox []BoundingBox `json:"predictions"`
+	BoundingBoxes []BoundingBox `json:"predictions"`
 }
 
 var boundingBoxes []BoundingBox = nil
@@ -201,9 +202,18 @@ func ReindexImage(payload string) ([]BoundingBox, error) {
 	var data ResponseData
 	err = json.Unmarshal(body, &data)
 	if err != nil {
+		fmt.Println(err)
 		return nil, err
 	}
-
-	boundingBoxes = data.BoundingBox
-	return data.BoundingBox, nil
+	fmt.Println("Here")
+	boundingBoxesJSON, err := json.Marshal(data.BoundingBoxes)
+	if err != nil {
+		log.Println(err)
+	}
+	fmt.Println("HELLO")
+	if boundingBoxesJSON != nil {
+		writeBack(BOUNDING_BOXES, string(boundingBoxesJSON))
+		boundingBoxes = data.BoundingBoxes
+	}
+	return data.BoundingBoxes, nil
 }

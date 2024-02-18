@@ -13,10 +13,12 @@ class ClientSocket: WebSocketDelegate {
     var socket: WebSocket!
     var screenPainter: ScreenPainter!
     var textSpeaker: TextSpeaker!
+    var cursorController: CursorController!
     
-    init(painter: ScreenPainter, speaker: TextSpeaker) {
+    init(painter: ScreenPainter, speaker: TextSpeaker, cursor: CursorController) {
         screenPainter = painter
         textSpeaker = speaker
+        cursorController = cursor
         setupSocket()
     }
     
@@ -34,9 +36,7 @@ class ClientSocket: WebSocketDelegate {
             print("websocket is connected: \(headers)")
         case .disconnected(let reason, let code):
             print("websocket is disconnected: \(reason) with code: \(code)")
-        case .text(let string):
-        
-//            print("Received text: \(string)")
+        case .text(let string):       
             guard let data = string.data(using: .utf8) else { return }
             do {
                 let genericResponse = try JSONDecoder().decode(SocketModels.GenericResponse.self, from: data)
@@ -45,12 +45,11 @@ class ClientSocket: WebSocketDelegate {
                 case "CLEAR":
                     // RECEIVED A JSON MESSAGE TO CLEAR BOXES
                     print("CLEAR BOXES")
-                    ScreenPainter.shared.clearHighlights()
-                case "DRAW":
-                    ScreenPainter.shared.clearHighlights()
+                    screenPainter.clearHighlights()
+                case "SELECT":
+                    screenPainter.clearHighlights()
                     print(data)
-                    let drawResponse = try JSONDecoder().decode(SocketModels.DrawBoxesResponse.self, from: data)
-//                    print(drawResponse.boundingBox.text)
+                    let drawResponse = try JSONDecoder().decode(SocketModels.SelectBoxResponse.self, from: data)
                     let box = drawResponse.payload
                     let x = box.x / 2
                     let y = box.y / 2
@@ -60,6 +59,28 @@ class ClientSocket: WebSocketDelegate {
                     let screenHeight = NSScreen.main?.frame.height ?? 1120
                     let newY = screenHeight - y - height * 0.5
                     ScreenPainter.shared.addOverlay(x: newX, y: newY, height: height, width: width, number: 0, caption: box.text)
+                case "BOXES":
+                    if let jsonStr = String(data: data, encoding: .utf8) {
+                        print("Fetched JSON String: \(jsonStr)")
+                    }
+                    let drawResponse = try JSONDecoder().decode(SocketModels.StoreBoxesResponse.self, from: data)
+                    var i = 1
+                    let boxes = drawResponse.payload
+                    print("BOXES")
+                    cursorController.matrix = CursorController.createMatrix()
+                    for box in boxes {
+                        let x = box.x / 2
+                        let y = box.y / 2
+                        let width = box.width / 2
+                        let height = box.height / 2
+                        let newX = x - width / 2
+                        let screenHeight = NSScreen.main?.frame.height ?? 1120
+                        let newY = screenHeight - y - height * 0.5
+//                        screenPainter.addOverlay(x: newX, y: newY, height: height, width: width, number: 0, caption: "")
+                        cursorController.addBoundingBox(x: newX, y: newY, height: height, width: width, id: box.detection_id)
+                        i += 1
+                    }
+                
                 case "SPEAK":
                     let speakResponse = try JSONDecoder().decode(SocketModels.TextSpeechResponse.self, from: data)
                     print(speakResponse.payload)

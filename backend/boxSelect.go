@@ -22,8 +22,8 @@ type SelectedCropped struct {
 	Width       float64 `json:"width"`
 	Height      float64 `json:"height"`
 	Type        string  `json:"type"`
-	DetectionId int     `json:"detectionID"`
-	Similarity  float64  `json:"similarity"`
+	DetectionId string  `json:"detection_id"`
+	Similarity  float64 `json:"similarity"`
 	Text 		string  `json:"text"`
 }
 
@@ -78,14 +78,14 @@ func getClosestBox(imageBase64 string, textQuery string) SelectedCropped {
 	predictions, _ := tagImageBoxes(imageBase64, textQuery)
 	selection := predictions[0]
 	selectedCropped := cropImageBase64(imageBase64, selection.X, selection.Y, selection.Width, selection.Height)
-	textCaption := SubImageDescription(imageBase64, selectedCropped)
+	textCaption := subImageDescription(imageBase64, selectedCropped)
 	print("SELECTION")
 	fmt.Println(selection)
 	fmt.Println(textCaption)
 	return convertToSelectedCropped(selection, textCaption)
 }
 
-func SubImageDescription(parent_image string, child_image string) string {
+func subImageDescription(parent_image string, child_image string) string {
 	context := constants.SUB_CONTEXT
 	prompt := "What's in this image?"
 	maxTokens := 2048

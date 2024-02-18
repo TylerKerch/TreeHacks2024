@@ -9,9 +9,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var screenReader: ScreenReader!
 //    var screenPainter: ScreenPainter!
     var textSpeaker: TextSpeaker!
+    var cursorController: CursorController!
     
     var hotKeyScreenReader: HotKey?
     var hotKeyVoiceRecorder: HotKey?
+    var hotKeyHoverRecorder: HotKey?
     var hotKeyTextReader: HotKey?
     
     var socket: ClientSocket!
@@ -24,8 +26,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         voiceRecorder = VoiceRecorder()
         screenReader = ScreenReader()
         textSpeaker = TextSpeaker()
+        cursorController = CursorController()
         
-        socket = ClientSocket(painter: ScreenPainter.shared, speaker: textSpeaker)
+        socket = ClientSocket(painter: ScreenPainter.shared, speaker: textSpeaker, cursor: cursorController)
         
         if let mainWindow = NSApplication.shared.windows.first {
             mainWindow.close()
@@ -50,6 +53,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             self.gifWindowController?.close()
             self.gifWindowController = nil
+        }
+        hotKeyHoverRecorder = HotKey(key: .backslash, modifiers: [])
+        hotKeyHoverRecorder?.keyDownHandler = {
+            print("Called")
+            let mouseLocation = NSEvent.mouseLocation
+            let x = Int(mouseLocation.x)
+            let y = Int(mouseLocation.y)
+            print(x)
+            print(y)
+            let boundingBox = self.cursorController.returnHover(x: x, y: y)
+            if boundingBox != nil {
+                self.socket.sendPacket(type: "HOVER", s: "\(boundingBox!.x) \(boundingBox!.y) \(boundingBox!.width) \(boundingBox!.height)")
+            }
         }
         
            
