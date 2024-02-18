@@ -96,6 +96,8 @@ func processMessage() error {
 
 	switch incomingMessage.Type {
 	case SCREENSHOT:
+		log.Print("Received screenshot")
+
 		current_screen_image = incomingMessage.Payload
 		decodedBytes, err := base64.StdEncoding.DecodeString(incomingMessage.Payload)
 		if err != nil {
@@ -114,7 +116,7 @@ func processMessage() error {
 		}
 
 		elapsedTime := time.Since(startTime)
-		fmt.Printf("The function took %s to execute.\n", elapsedTime)
+		fmt.Printf("Clip took %s to execute.\n", elapsedTime)
 
 		embedding, err := ConvertBodyToVector(result.Body)
 		if err != nil {
