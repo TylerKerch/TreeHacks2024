@@ -5,12 +5,13 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"treehacks/backend/constants"
+
+	"github.com/google/uuid"
 )
 
 func UploadBase64Image(image string) string {
@@ -27,7 +28,7 @@ func UploadBase64Image(image string) string {
 	}
 
 	var headers = map[string]string{
-		"Content-Type":  "application/json",
+		"Content-Type": "application/json",
 	}
 	req, err := http.NewRequest("POST", "https://real-bug-pet.ngrok-free.app/upload", bytes.NewBuffer(jsonData))
 	if err != nil {
@@ -164,8 +165,8 @@ type BoundingBox struct {
 
 // Define the root struct to match the full JSON structure
 type ResponseData struct {
-	Time        float64      `json:"time"`
-	Image       ImageData    `json:"image"`
+	Time        float64       `json:"time"`
+	Image       ImageData     `json:"image"`
 	BoundingBox []BoundingBox `json:"predictions"`
 }
 
