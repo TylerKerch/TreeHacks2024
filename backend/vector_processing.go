@@ -2,12 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	// "fmt"
+	"fmt"
 	"gonum.org/v1/gonum/mat"
-	// "image"
-	// "log"
+	"image"
+	"log"
 	"math"
-	// "os"
+	"bytes"
 )
 
 func ConvertBodyToVector(body []byte) ([]float64, error) {
@@ -57,35 +57,55 @@ func cosineSimilarity(vectorA, vectorB []float64) float64 {
 	return dot / (magA * magB)
 }
 
+// bytesToImage converts a byte slice into an image.Image.
+func bytesToImage(b []byte) (image.Image, error) {
+	reader := bytes.NewReader(b)
+	img, _, err := image.Decode(reader)
+	if err != nil {
+		return nil, err
+	}
+	return img, nil
+}
+
 // compareImages compares two images pixel by pixel and returns a score based on the similarity.
-// func compareVectors(img1, img2 image.Image) float64 {
-// 	bounds1 := img1.Bounds()
-// 	bounds2 := img2.Bounds()
-// 	if bounds1.Dx() != bounds2.Dx() || bounds1.Dy() != bounds2.Dy() {
-// 		log.Fatalf("Images are of different sizes: %v vs %v", bounds1.Size(), bounds2.Size())
-// 	}
+func compareVectors(imgData1 []byte, imgData2 []byte) float64 {
+	img1, err := bytesToImage(imgData1)
+	if err != nil {
+		log.Fatalf("Failed to convert bytes to image for imgData1: %v", err)
+	}
 
-// 	var similarPixels int
-// 	totalPixels := bounds1.Dx() * bounds1.Dy()
+	img2, err := bytesToImage(imgData2)
+	if err != nil {
+		log.Fatalf("Failed to convert bytes to image for imgData2: %v", err)
+	}
 
-// 	for y := bounds1.Min.Y; y < bounds1.Max.Y; y++ {
-// 		for x := bounds1.Min.X; x < bounds1.Max.X; x++ {
-// 			r1, g1, b1, a1 := img1.At(x, y).RGBA()
-// 			r2, g2, b2, a2 := img2.At(x, y).RGBA()
-// 			if r1 == r2 && g1 == g2 && b1 == b2 && a1 == a2 {
-// 				similarPixels++
-// 			}
-// 		}
-// 	}
+	bounds1 := img1.Bounds()
+	bounds2 := img2.Bounds()
+	if bounds1.Dx() != bounds2.Dx() || bounds1.Dy() != bounds2.Dy() {
+		log.Fatalf("Images are of different sizes: %v vs %v", bounds1.Size(), bounds2.Size())
+	}
 
-// 	score := (float64(similarPixels) / float64(totalPixels)) * 100
-// 	return score
-// }
+	var similarPixels int
+	totalPixels := bounds1.Dx() * bounds1.Dy()
 
-func CompareVectors(v1 []float64, v2 []float64) string {
+	for y := bounds1.Min.Y; y < bounds1.Max.Y; y++ {
+		for x := bounds1.Min.X; x < bounds1.Max.X; x++ {
+			r1, g1, b1, a1 := img1.At(x, y).RGBA()
+			r2, g2, b2, a2 := img2.At(x, y).RGBA()
+			if r1 == r2 && g1 == g2 && b1 == b2 && a1 == a2 {
+				similarPixels++
+			}
+		}
+	}
+
+	score := (float64(similarPixels) / float64(totalPixels)) * 100
+	return score
+}
+
+func CompareVectors(v1 []float64, v2 []float64, b1 []byte, b2 []byte) string {
 	similarity := cosineSimilarity(v1, v2)
-	// ret, _ := compareVectors()
-	// fmt.Println(ret)
+	ret := compareVectors(b1, b2)
+	fmt.Println(ret)
 	if similarity < 0.85 {
 		return VOICE_OVER
 	}

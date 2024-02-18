@@ -6,18 +6,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
-	"net/http"
-	"os"
-	"strings"
-	"time"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sagemakerruntime"
 	"github.com/gorilla/websocket"
 	"github.com/lpernett/godotenv"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+	"time"
 )
 
 var upgrader = websocket.Upgrader{
@@ -54,12 +53,13 @@ const (
 
 var sagemaker_client *sagemakerruntime.SageMakerRuntime
 var previous_embedding []float64 = nil
+var previous_image []byte = nil
+var previous_action string
 var conn *websocket.Conn
 var current_screen_image string
 
-var current_global_query string    // reset me on new query
-var step_channel chan (bool) = nil // reset me on new query
-var difference_detected chan (bool) = make(chan bool, 1)
+var current_global_query string        // reset me on new query
+var step_channel chan (bool) = nil     // reset me on new query
 var current_step_count = 0             // reset me on new query
 var current_context_window string = "" // reset me on new query
 
@@ -121,19 +121,15 @@ func processMessage() error {
 			return errors.New("failed to convert body to vector from (CLIP) model")
 		}
 		embedding = Normalize(embedding)
-		// current_image = result.Body
+		current_image := result.Body
 
 		next_action := VOICE_OVER
 		if previous_embedding != nil {
-			next_action = CompareVectors(previous_embedding, embedding)
+			next_action = CompareVectors(previous_embedding, embedding, previous_image, current_image)
 		}
-		// previous_image = current_image
+		previous_image = current_image
 		previous_embedding = embedding
-
-		// If we're waiting for a subquery, we can't do anything else.
-		if next_action != NOTHING {
-			difference_detected <- true
-		}
+		previous_action = next_action
 
 		switch next_action {
 		case NOTHING:
@@ -165,7 +161,10 @@ func processMessage() error {
 				case <-step_channel:
 					return
 				default:
-					<-difference_detected
+					if previous_action == NOTHING {
+						time.Sleep(1 * time.Second)
+						continue
+					}
 
 					// Event loop
 					nextStep := GetQueryNextStep(QueryNextStepContext{
@@ -176,11 +175,6 @@ func processMessage() error {
 					})
 
 					text := nextStep.Text
-					err := nextStep.Err
-
-					if err != nil {
-						log.Println(err)
-					}
 
 					// We're done.
 					if text == "LAST STEP" || current_step_count > 10 {
@@ -193,6 +187,7 @@ func processMessage() error {
 					writeBack(VOICE_OVER, nextStep.Audio)
 					current_context_window += "\n" + nextStep.Text
 					current_step_count++
+					// log.Println(current_context_window)
 				}
 			}
 		}()
@@ -221,9 +216,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
+	ctx, _ := context.WithCancel(context.Background())
 	err := godotenv.Load()
 	if err != nil {
 		panic("Environment variable(s) couldn't be loaded")
@@ -260,4 +253,5 @@ func main() {
 	http.ListenAndServe(uri, nil)
 
 	ocrClosePool()
+
 }
