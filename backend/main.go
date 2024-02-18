@@ -96,6 +96,7 @@ func processMessage() error {
 
 	switch incomingMessage.Type {
 	case SCREENSHOT:
+		log.Print("Received screenshot")
 		current_screen_image = incomingMessage.Payload
 		decodedBytes, err := base64.StdEncoding.DecodeString(incomingMessage.Payload)
 		if err != nil {
