@@ -1,3 +1,10 @@
+//
+//  TextReader.swift
+//  frontend
+//
+//  Created by Sarvesh Phoenix on 2/17/24.
+//
+
 import Cocoa
 import AVFoundation
 import Speech
@@ -7,17 +14,20 @@ class VoiceRecorder {
     var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
     var recognitionTask: SFSpeechRecognitionTask?
     var speechRecognizer: SFSpeechRecognizer?
+    var finalTranscription: String = ""
     
     init() {
         audioEngine = AVAudioEngine()
         speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
-        
+    }
+    
+    func startRecording() {
         requestPermissions { [weak self] granted in
             guard granted else {
                 print("Permissions not granted")
                 return
             }
-//            self?.startTranscribing()
+            self?.startTranscribing()
         }
     }
     
@@ -50,19 +60,20 @@ class VoiceRecorder {
         }
         recognitionRequest.shouldReportPartialResults = true
 
-        recognitionTask = recognizer.recognitionTask(with: recognitionRequest) { result, error in
+        recognitionTask = recognizer.recognitionTask(with: recognitionRequest) { [weak self] result, error in
             var isFinal = false
 
             if let result = result {
-                print("Transcription: \(result.bestTranscription.formattedString)")
+//                print("Transcription: \(result.bestTranscription.formattedString)")
+                self?.finalTranscription = result.bestTranscription.formattedString
                 isFinal = result.isFinal
             }
 
             if error != nil || isFinal {
-                self.audioEngine.stop()
-                self.audioEngine.inputNode.removeTap(onBus: 0)
-                self.recognitionRequest = nil
-                self.recognitionTask = nil
+                self?.audioEngine.stop()
+                self?.audioEngine.inputNode.removeTap(onBus: 0)
+                self?.recognitionRequest = nil
+                self?.recognitionTask = nil
             }
         }
 
@@ -79,10 +90,12 @@ class VoiceRecorder {
         }
     }
     
-    func stopTranscribing() {
+    func stopRecording() {
+        print("Final transcription:\n \(finalTranscription)")
         audioEngine.stop()
         audioEngine.inputNode.removeTap(onBus: 0)
         recognitionRequest?.endAudio()
         recognitionTask?.cancel()
+        print("Finished recording")
     }
 }
