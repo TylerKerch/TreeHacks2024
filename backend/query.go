@@ -35,7 +35,7 @@ func GetQueryNextStep(args QueryNextStepContext) QueryStep {
 		prompt = fmt.Sprintf("I am on the following page. I want to explain to a friend '%s'.  Tell me just the first step to achieve this and get to the next step. Be brief. If I have reached the last step, say 'LAST STEP', but otherwise do not.", current_global_query)
 	}
 
-	maxTokens := 128000
+	maxTokens := 2048
 	var headers = map[string]string{
 		"Authorization": "Bearer " + os.Getenv("OPEN_AI_API_KEY"),
 		"Content-Type":  "application/json",
@@ -65,6 +65,7 @@ func GetQueryNextStep(args QueryNextStepContext) QueryStep {
 	if err != nil {
 		return QueryStep{Err: errors.New("error creating request")}
 	}
+	log.Println("Called OpenAI")
 
 	for key, value := range headers {
 		req.Header.Add(key, value)
