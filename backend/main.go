@@ -11,6 +11,8 @@ import (
 	"log"
 	"net/http"
 
+	"bytes"
+	"io"
 	"github.com/gorilla/websocket"
 	"github.com/lpernett/godotenv"
 
@@ -56,7 +58,30 @@ func writeBack(conn *websocket.Conn, message string, payload string) {
 }
 
 func ReindexImage(payload string) {
+	// Prepare the HTTP request
+	apiURL := "https://detect.roboflow.com/ui-screenshots/1?api_key=icHlGR6hm7WYll77q6bh"
+	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer([]byte(payload)))
+	if err != nil {
+		panic(err)
+	}
 
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	// Send the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	// Read and print the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	println(string(body))
 }
 
 func GenerateVoiceover(payload string) string {
