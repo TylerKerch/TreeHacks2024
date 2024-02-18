@@ -104,7 +104,7 @@ type ImageData struct {
 }
 
 // Define the struct for each prediction
-type Prediction struct {
+type BoundingBox struct {
 	X      float64 `json:"x"`
 	Y      float64 `json:"y"`
 	Width  float64 `json:"width"`
@@ -116,10 +116,12 @@ type Prediction struct {
 type ResponseData struct {
 	Time        float64      `json:"time"`
 	Image       ImageData    `json:"image"`
-	Predictions []Prediction `json:"predictions"`
+	BoundingBox []BoundingBox `json:"predictions"`
 }
 
-func ReindexImage(payload string) ([]Prediction, error) {
+var boundingBoxes []BoundingBox = nil
+
+func ReindexImage(payload string) ([]BoundingBox, error) {
 	// Prepare the HTTP request
 	apiURL := "https://detect.roboflow.com/ui-screenshots/1?api_key=icHlGR6hm7WYll77q6bh"
 	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer([]byte(payload)))
@@ -149,5 +151,7 @@ func ReindexImage(payload string) ([]Prediction, error) {
 		return nil, err
 	}
 
-	return data.Predictions, nil
+	boundingBoxes = data.BoundingBox
+	
+	return data.BoundingBox, nil
 }
