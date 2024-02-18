@@ -22,8 +22,8 @@ type SelectedCropped struct {
 	Width       float64 `json:"width"`
 	Height      float64 `json:"height"`
 	Type        string  `json:"type"`
-	DetectionId int     `json:"detectionID"`
-	Similarity  float64  `json:"similarity"`
+	DetectionId string  `json:"detection_id"`
+	Similarity  float64 `json:"similarity"`
 	Text 		string  `json:"text"`
 }
 

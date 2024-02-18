@@ -38,7 +38,8 @@ const (
 	QUERY                = "QUERY"
 	CLEAR_BOUNDING_BOXES = "CLEAR"
 	VOICE_OVER           = "SPEAK"
-	DRAW_BOXES           = "DRAW"
+	SELECT_BOX           = "SELECT"
+	BOUNDING_BOXES       = "BOXES"
 
 	// Internal
 	REINDEX = "REI"
@@ -201,7 +202,7 @@ func processMessage() error {
 					if err != nil {
 						log.Println(err)
 					}
-					writeBack(DRAW_BOXES, string(boxJSON))
+					writeBack(SELECT_BOX, string(boxJSON))
 
 					writeBack(VOICE_OVER, nextStep.Audio)
 					current_context_window += "\n" + nextStep.Text

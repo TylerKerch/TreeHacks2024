@@ -23,8 +23,9 @@ class ScreenPainter {
         // Set the custom view as the window's content view
         overlayWindow.contentView = drawingView
         drawingView.circleText = String(number)
-        drawingView.captionText = caption
-        
+        if caption != "" {
+            drawingView.captionText = caption
+        }
         // Make the overlay window visible
         overlayWindow.orderFront(nil)
         highlightWindows.append(overlayWindow)
