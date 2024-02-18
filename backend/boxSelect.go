@@ -22,8 +22,8 @@ type SelectedCropped struct {
 	Width       float64 `json:"width"`
 	Height      float64 `json:"height"`
 	Type        string  `json:"type"`
-	DetectionId int     `json:"detectionID"`
-	Similarity  float64  `json:"similarity"`
+	DetectionId string  `json:"detection_id"`
+	Similarity  float64 `json:"similarity"`
 	Text 		string  `json:"text"`
 }
 
@@ -57,7 +57,7 @@ func cropImageBase64(imageBase64 string, x, y, width, height float64) string {
 	}
 
 	// Crop the image
-	rect := image.Rect(int(x-width/2), int(y-width/2), int(x+width/2), int(y+height/2))
+	rect := image.Rect(int(x-width/2), int(y-height/2), int(x+width/2), int(y+height/2))
 	croppedImg := image.NewRGBA(rect)
 	draw.Draw(croppedImg, rect, img, image.Pt(int(x), int(y)), draw.Src)
 
@@ -74,11 +74,12 @@ func cropImageBase64(imageBase64 string, x, y, width, height float64) string {
 }
 
 func getClosestBox(imageBase64 string, textQuery string) SelectedCropped {
+	print("TEXT QUERY", textQuery)
 	predictions, _ := tagImageBoxes(imageBase64, textQuery)
-	fmt.Println(predictions)
 	selection := predictions[0]
 	selectedCropped := cropImageBase64(imageBase64, selection.X, selection.Y, selection.Width, selection.Height)
 	textCaption := SubImageDescription(imageBase64, selectedCropped)
+	print("SELECTION")
 	fmt.Println(selection)
 	fmt.Println(textCaption)
 	return convertToSelectedCropped(selection, textCaption)

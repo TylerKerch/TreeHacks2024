@@ -53,6 +53,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self.gifWindowController = nil
         }
         
+           
+//        let x = 163.0 / 2
+//        let y = 420.0 / 2
+//        let width = 278.0 / 2
+//        let height = 112.0 / 2
+//        let newX = x - width / 2
+//        let screenHeight = NSScreen.main?.frame.height ?? 1120
+//        let newY = screenHeight - y - height * 0.5
+//        screenPainter.addOverlay(x: newX, y: newY, height: height, width: width, number: 0, caption: "here")
+
+        
         preloadGif()
     }
     
