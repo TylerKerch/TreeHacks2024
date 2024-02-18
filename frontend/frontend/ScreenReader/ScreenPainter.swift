@@ -72,7 +72,7 @@ class DrawingView: NSView {
         
         
         let rectHeight: CGFloat = 50
-        let rectY = 0
+//        let rectY = 0
         let rectangle = NSRect(x: 0, y: 0, width: bounds.width, height: rectHeight)
         NSColor.white.withAlphaComponent(0.9).setFill()
         __NSRectFillUsingOperation(rectangle, .sourceOver)
@@ -84,7 +84,5 @@ class DrawingView: NSView {
         let captionString = NSAttributedString(string: captionText, attributes: captionAttributes)
         captionString.draw(at: CGPoint(x: 10, y: rectHeight - 20 - stringSize.height / 2))
     
-        
-        let captionSize = captionString.size()
     }
 }

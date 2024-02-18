@@ -1,24 +1,20 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"time"
-	"treehacks/backend/constants"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sagemakerruntime"
-	"github.com/danlock/gogosseract"
 	"github.com/gorilla/websocket"
 	"github.com/lpernett/godotenv"
 )
@@ -47,7 +43,7 @@ const (
 	REINDEX = "REI"
 	NOTHING = "NONE"
 
-	//Image Description
+	// Image Description
 	GPT4V_MODEL_ENGINE = "gpt-4-vision-preview"
 	GPT4V_OPENAI_URL   = "https://api.openai.com/v1/chat/completions"
 )
@@ -55,26 +51,19 @@ const (
 var sess *session.Session
 var sagemakerClient *sagemakerruntime.SageMakerRuntime
 var previousEmbedding []float64 = nil
+var conn *websocket.Conn
 
-func writeBack(conn *websocket.Conn, message string, payload string) {
-	// m := "test"
-
-	// conn.WriteMessage(messageType, m)
+func writeBack(messageType string, payload string) {
+	err := conn.WriteJSON(MessageContents{
+		Type:    messageType,
+		Payload: payload,
+	})
+	if err != nil {
+		log.Println(err)
+	}
 }
 
-func ReindexImage(payload string) {
-
-}
-
-func GenerateVoiceover(payload string) string {
-	// get voiceover from GPT4
-
-	// goroutine that fires a message over the network
-
-	return ""
-}
-
-func processMessage(conn *websocket.Conn) error {
+func processMessage() error {
 	wsMessageType, message, err := conn.ReadMessage() // Read a message from the WebSocket.
 	if err != nil {
 		return err
@@ -120,27 +109,35 @@ func processMessage(conn *websocket.Conn) error {
 		}
 		embedding = Normalize(embedding)
 
-		next_action := NOTHING
-
-		if previousEmbedding == nil {
-			next_action = VOICE_OVER
-		} else {
+		next_action := VOICE_OVER
+		if previousEmbedding != nil {
 			next_action = CompareVectors(previousEmbedding, embedding)
 		}
 
 		previousEmbedding = embedding
+
 		log.Println(next_action)
 
 		switch next_action {
 		case NOTHING:
+			go writeBack(NOTHING, "")
 			return nil
 		case REINDEX:
-			go ReindexImage(incomingMessage.Payload)
+			jsonData, err := ReindexImage(incomingMessage.Payload)
+			if err != nil {
+				log.Println(err)
+			}
+
+			go writeBack(REINDEX, string(jsonData))
 			return nil
 		case VOICE_OVER:
-			go ReindexImage(incomingMessage.Payload)
-			voiceMessage := GenerateVoiceover(incomingMessage.Payload)
-			go writeBack(conn, VOICE_OVER, voiceMessage)
+			jsonData, err := ReindexImage(incomingMessage.Payload)
+			if err != nil {
+				log.Println(err)
+			}
+			go writeBack(REINDEX, string(jsonData))
+			voiceMessage := ImageDescription(incomingMessage.Payload)
+			go writeBack(VOICE_OVER, voiceMessage)
 			return nil
 		}
 	case QUERY:
@@ -150,120 +147,19 @@ func processMessage(conn *websocket.Conn) error {
 	return err
 }
 
-// ConvertImageToBase64 takes the path of an image file and returns its base64 encoded string.
-func ConvertImageToBase64(imagePath string) (string, error) {
-	// Read the file into a byte slice
-	imageBytes, err := os.ReadFile(imagePath)
-	if err != nil {
-		return "", err
-	}
 
-	// Encode the byte slice to base64
-	base64Image := base64.StdEncoding.EncodeToString(imageBytes)
-
-	return base64Image, nil
-}
-
-func imageDescription(base64String string) string {
-	context := constants.CONTEXT
-	prompt := "What's in this image?"
-	maxTokens := 2048
-	var headers = map[string]string{
-		"Authorization": "Bearer " + os.Getenv("OPEN_AI_API_KEY"),
-		"Content-Type":  "application/json",
-	}
-
-	data := map[string]interface{}{
-		"model": GPT4V_MODEL_ENGINE,
-		"messages": []map[string]interface{}{
-			{"role": "system", "content": context},
-			{"role": "user", "content": []map[string]string{
-				{"type": "text", "text": prompt},
-				{"type": "image_url", "image_url": "data:image/jpeg;base64," + base64String},
-			}},
-		},
-		"max_tokens": maxTokens,
-	}
-
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		fmt.Println("Error encoding JSON:", err)
-		return ""
-	}
-
-	req, err := http.NewRequest("POST", GPT4V_OPENAI_URL, bytes.NewBuffer(jsonData))
-	if err != nil {
-		fmt.Println("Error creating request:", err)
-		return ""
-	}
-
-	for key, value := range headers {
-		req.Header.Add(key, value)
-	}
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Error making request:", err)
-		return ""
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		return ""
-	}
-	type ApiResponse struct {
-		Choices []struct {
-			Message struct {
-				Content string `json:"content"`
-			} `json:"message"`
-		} `json:"choices"`
-	}
-	var apiResponse ApiResponse
-	if err := json.Unmarshal(body, &apiResponse); err != nil {
-		fmt.Println("Error unmarshaling response body:", err)
-		return ""
-	}
-
-	content := apiResponse.Choices[0].Message.Content
-	fmt.Println("Content:", content)
-	return content
-}
-
-func textRecognition(base64String string, ctx context.Context) string {
-	trainingDataFile, _ := os.Open("eng.traineddata")
-
-	cfg := gogosseract.Config{
-		Language:     "eng",
-		TrainingData: trainingDataFile,
-	}
-
-	data, _ := base64.StdEncoding.DecodeString(base64String)
-    reader := bytes.NewReader(data)
-	// Create 10 Tesseract instances that can process image requests concurrently.
-	pool, _ := gogosseract.NewPool(ctx, 10, gogosseract.PoolConfig{Config: cfg})
-	// ParseImage loads the image and waits until the Tesseract worker sends back your result.
-	hocr, _ := pool.ParseImage(ctx, reader, gogosseract.ParseImageOptions{
-		IsHOCR: true,
-	})
-
-	fmt.Println(hocr)
-
-	// Always remember to Close the pool to release resources
-	pool.Close()
-}
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil) // Upgrade the connection to a WebSocket.
+	connection, err := upgrader.Upgrade(w, r, nil) // Upgrade the connection to a WebSocket.
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	defer conn.Close()
+
+	conn = connection
+	defer connection.Close()
 
 	for {
-		err = processMessage(conn)
+		err = processMessage()
 
 		if err != nil {
 			log.Print(err)
@@ -277,14 +173,12 @@ func main() {
 	if err != nil {
 		panic("Environment variable(s) couldn't be loaded")
 	}
-	imagePath := "image.png" // Replace with the path to your image
-	base64String, err := ConvertImageToBase64(imagePath)
-	textRecognition(base64String, ctx)
 
 	var access_token = os.Getenv("ACCESS_TOKEN")
 	var secret_access_token = os.Getenv("SECRET_ACCESS_TOKEN")
+	var openai_api_key = os.Getenv("OPEN_AI_API_KEY")
 
-	if access_token == "" || secret_access_token == "" {
+	if access_token == "" || secret_access_token == "" || openai_api_key == "" {
 		panic("Environment variable(s) missing")
 	}
 
@@ -299,9 +193,14 @@ func main() {
 
 	sagemakerClient = sagemakerruntime.New(sess)
 
+	ocrSetUp(ctx)
 	http.HandleFunc("/ws", handleWebSocket)
 	var uri = fmt.Sprintf("localhost:%d", PORT)
 
 	fmt.Println("Running WebSocket server on " + uri)
 	http.ListenAndServe(uri, nil)
+
+	ocrClosePool()
+
+	
 }
