@@ -89,9 +89,10 @@ func ImageDescription(base64_image string) string {
 	}
 
 	if len(apiResponse.Choices) == 0 {
-		fmt.Println("No choices")
+		fmt.Println("No choices in response, error here: ", string(body))
 		return ""
 	}
+
 	content := apiResponse.Choices[0].Message.Content
 	fmt.Println("Content (Global Voiceover): ", content)
 	return content

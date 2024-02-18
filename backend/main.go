@@ -152,12 +152,12 @@ func processMessage() error {
 	switch incomingMessage.Type {
 	case REINDEX:
 		startTime := time.Now()
-		predictions, err := ReindexImage(incomingMessage.Payload)
-		if err != nil {
-			log.Println(err)
-		}
+		// predictions, err := ReindexImage(incomingMessage.Payload)
+		// if err != nil {
+		// 	log.Println(err)
+		// }
 
-		tagImageBoxes(incomingMessage.Payload, predictions)
+		// tagImageBoxes(incomingMessage.Payload, predictions)
 		elapsedTime := time.Since(startTime)
 		fmt.Printf("The function took %s to execute.\n", elapsedTime)
 
@@ -196,7 +196,9 @@ func processMessage() error {
 			// go ReindexImage(incomingMessage.Payload)
 
 			voiceMessage := ImageDescription(incomingMessage.Payload)
-			go writeBack(VOICE_OVER, voiceMessage)
+			if voiceMessage != "" {
+				go writeBack(VOICE_OVER, voiceMessage)
+			}
 			return nil
 		}
 	case QUERY:
