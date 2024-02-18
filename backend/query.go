@@ -30,9 +30,9 @@ func GetQueryNextStep(args QueryNextStepContext) QueryStep {
 	current_screen_image := args.CurrentScreenImage
 	current_global_query := args.GlobalQuery
 
-	prompt := fmt.Sprintf("I am on the following page. I want to explain to a friend '%s'. Tell me just the first step to achieve this. Be brief. If there's a good chance the action we take will finish the task, say 'LAST STEP' with no other text, but otherwise do not.", current_global_query)
+	prompt := fmt.Sprintf("I am on the following page. I want to explain to a friend '%s'. Tell me just the first step to achieve this, mentioning a button that may complete the action if it exists. Be brief. If there's a good chance the action we take will finish the task, say 'LAST STEP' with no other text, but otherwise do not.", current_global_query)
 	if current_step != 0 {
-		prompt = fmt.Sprintf("I am on the following page. I want to explain to a friend '%s'. Tell me just the first step to achieve this and get to the next step. Be brief. If there's a good chance the action we take will finish the task, say 'LAST STEP' with no other text, but otherwise do not.", current_global_query)
+		prompt = fmt.Sprintf("I am on the following page. I want to explain to a friend '%s'. Tell me just the first step to achieve this and get to the next step, mentioning a button that may complete the action if it exists. Be brief. If there's a good chance the action we take will finish the task, say 'LAST STEP' with no other text, but otherwise do not.", current_global_query)
 	}
 
 	maxTokens := 2048

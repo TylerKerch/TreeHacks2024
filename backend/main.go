@@ -168,6 +168,7 @@ func processMessage() error {
 
 		current_global_query = incomingMessage.Payload
 		step_channel = make(chan bool)
+		difference_detected = make(chan bool, 1)
 		current_step_count = 0
 		UpdateContextWindow(current_global_query)
 
@@ -196,7 +197,7 @@ func processMessage() error {
 					if text == "LAST STEP" || current_step_count > 10 {
 						log.Println("Query finished.")
 						step_channel <- true
-						continue
+						return
 					}
 					closestBox := getClosestBox(current_screen_image, text)
 					boxJSON, err := json.Marshal(closestBox)
