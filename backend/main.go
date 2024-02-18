@@ -2,6 +2,7 @@ package main
 
 import (
 	// "bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -86,18 +87,24 @@ func processMessage(conn *websocket.Conn) error {
 
 	switch incomingMessage.Type {
 	case SCREENSHOT:
+		decodedBytes, err := base64.StdEncoding.DecodeString(incomingMessage.Payload)
+		if err != nil {
+			return err
+		}
 
-		log.Println("Received screenshot", incomingMessage.Payload)
+		// startTime := time.Now()
 
 		result, err := sagemakerClient.InvokeEndpoint(&sagemakerruntime.InvokeEndpointInput{
-			Body:         []byte(incomingMessage.Payload),
+			Body:         decodedBytes,
 			EndpointName: aws.String("clip-image-model-2023-02-11-06-16-48-670"),
 			ContentType:  aws.String("application/x-image"),
 		})
 		if err != nil {
-			log.Println(err)
 			return errors.New("failed to call Sagemaker (CLIP) endpoint")
 		}
+
+		// elapsedTime := time.Since(startTime)
+		// fmt.Printf("The function took %s to execute.\n", elapsedTime)
 
 		log.Println("Request finished")
 
