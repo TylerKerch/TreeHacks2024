@@ -51,7 +51,6 @@ const (
 	FRESH_CONTEXT_WINDOW = "You are a tool that aides the elderly in navigating their computers by helping them fulfill a goal (like 'watching a video about cats') by suggesting a next step. Your goal is to only output the next step towards reaching the final screen. Currently, your goal is to assist the user with this query that they've provided: GLOBAL_QUERY. If you have reached the final screen (that is, there isn't an action the user needs to take), say 'LAST STEP'. Below is the context of the task including steps that have been taken. CONTEXT: "
 )
 
-var sess *session.Session
 var sagemaker_client *sagemakerruntime.SageMakerRuntime
 var previous_embedding []float64 = nil
 var previous_action string
@@ -121,12 +120,13 @@ func processMessage() error {
 			return errors.New("failed to convert body to vector from (CLIP) model")
 		}
 		embedding = Normalize(embedding)
+		// current_image = result.Body
 
 		next_action := VOICE_OVER
 		if previous_embedding != nil {
 			next_action = CompareVectors(previous_embedding, embedding)
 		}
-
+		// previous_image = current_image
 		previous_embedding = embedding
 		previous_action = next_action
 

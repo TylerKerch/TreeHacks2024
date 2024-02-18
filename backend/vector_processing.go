@@ -2,9 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	"math"
-
+	// "fmt"
 	"gonum.org/v1/gonum/mat"
+	// "image"
+	// "log"
+	"math"
+	// "os"
 )
 
 func ConvertBodyToVector(body []byte) ([]float64, error) {
@@ -54,9 +57,35 @@ func cosineSimilarity(vectorA, vectorB []float64) float64 {
 	return dot / (magA * magB)
 }
 
+// compareImages compares two images pixel by pixel and returns a score based on the similarity.
+// func compareVectors(img1, img2 image.Image) float64 {
+// 	bounds1 := img1.Bounds()
+// 	bounds2 := img2.Bounds()
+// 	if bounds1.Dx() != bounds2.Dx() || bounds1.Dy() != bounds2.Dy() {
+// 		log.Fatalf("Images are of different sizes: %v vs %v", bounds1.Size(), bounds2.Size())
+// 	}
+
+// 	var similarPixels int
+// 	totalPixels := bounds1.Dx() * bounds1.Dy()
+
+// 	for y := bounds1.Min.Y; y < bounds1.Max.Y; y++ {
+// 		for x := bounds1.Min.X; x < bounds1.Max.X; x++ {
+// 			r1, g1, b1, a1 := img1.At(x, y).RGBA()
+// 			r2, g2, b2, a2 := img2.At(x, y).RGBA()
+// 			if r1 == r2 && g1 == g2 && b1 == b2 && a1 == a2 {
+// 				similarPixels++
+// 			}
+// 		}
+// 	}
+
+// 	score := (float64(similarPixels) / float64(totalPixels)) * 100
+// 	return score
+// }
+
 func CompareVectors(v1 []float64, v2 []float64) string {
 	similarity := cosineSimilarity(v1, v2)
-
+	// ret, _ := compareVectors()
+	// fmt.Println(ret)
 	if similarity < 0.85 {
 		return VOICE_OVER
 	}
