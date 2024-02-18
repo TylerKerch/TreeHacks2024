@@ -27,7 +27,7 @@ class MenuBarController {
     }
     
     @objc private func readScreen() {
-        ScreenReader.readScreenContents()
+        ScreenReader().readScreenContents()
     }
     
     @objc private func moveCursor() {

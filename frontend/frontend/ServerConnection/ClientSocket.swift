@@ -98,7 +98,11 @@ class ClientSocket: WebSocketDelegate {
         do {
             let requestData = try JSONEncoder().encode(request)
             let requestString = String(data: requestData, encoding: .utf8)!
-            socket.write(string: requestString)
+            if(socket != nil) {
+                socket.write(string: requestString)
+            } else {
+                print("Socket hasn't been constructed properly")
+            }
         } catch {
             print("Error encoding UIBoxesRequest: \(error)")
         }
