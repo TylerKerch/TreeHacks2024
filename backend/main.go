@@ -252,15 +252,7 @@ func main() {
 	if err != nil {
 		panic("Environment variable(s) couldn't be loaded")
 	}
-
-	imagePath := "image.png"
-	base64Image, err := ConvertImageToBase64(imagePath)
-	if err != nil {
-		fmt.Println("Failed to convert image to base64:", err)
-		return
-	}
-	imageDescription(base64Image)
-
+	
 	var access_token = os.Getenv("ACCESS_TOKEN")
 	var secret_access_token = os.Getenv("SECRET_ACCESS_TOKEN")
 
