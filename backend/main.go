@@ -43,7 +43,7 @@ const (
 	REINDEX = "REI"
 	NOTHING = "NONE"
 
-	//Image Description
+	// Image Description
 	GPT4V_MODEL_ENGINE = "gpt-4-vision-preview"
 	GPT4V_OPENAI_URL   = "https://api.openai.com/v1/chat/completions"
 )
