@@ -190,10 +190,11 @@ func processMessage() error {
 
 					// We're done.
 					if text == "LAST STEP" || current_step_count > 10 {
+						log.Println("Query finished.")
 						step_channel <- true
 						continue
 					}
-					closestBox := getClosestBox(current_screen_image,text)
+					closestBox := getClosestBox(current_screen_image, text)
 					boxJSON, err := json.Marshal(closestBox)
 					if err != nil {
 						log.Println(err)
