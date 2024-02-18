@@ -199,7 +199,6 @@ func ReindexImage(payload string) ([]BoundingBox, error) {
 	}
 
 	var data ResponseData
-	fmt.Println(string(body))
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		return nil, err
