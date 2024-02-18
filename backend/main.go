@@ -53,7 +53,7 @@ var sagemakerClient *sagemakerruntime.SageMakerRuntime
 var previousEmbedding []float64 = nil
 var conn *websocket.Conn
 
-func writeBack(message string, payload string) {
+func writeBack(messageType string, payload string) {
 	err := conn.WriteJSON(MessageContents{
 		Type:    NOTHING,
 		Payload: payload,

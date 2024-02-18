@@ -93,7 +93,29 @@ func ImageDescription(base64_image string) string {
 	return content
 }
 
-func ReindexImage(payload string) {
+// Define the struct for the image part
+type ImageData struct {
+	Width  int `json:"width"`
+	Height int `json:"height"`
+}
+
+// Define the struct for each prediction
+type Prediction struct {
+	X      float64 `json:"x"`
+	Y      float64 `json:"y"`
+	Width  float64 `json:"width"`
+	Height float64 `json:"height"`
+	Class  string  `json:"class"`
+}
+
+// Define the root struct to match the full JSON structure
+type ResponseData struct {
+	Time        float64      `json:"time"`
+	Image       ImageData    `json:"image"`
+	Predictions []Prediction `json:"predictions"`
+}
+
+func ReindexImage(payload string) (string, error) {
 	// Prepare the HTTP request
 	apiURL := "https://detect.roboflow.com/ui-screenshots/1?api_key=icHlGR6hm7WYll77q6bh"
 	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer([]byte(payload)))
@@ -107,15 +129,26 @@ func ReindexImage(payload string) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	// Read and print the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
-	println(string(body))
+	var data ResponseData
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return "", err
+	}
+
+	jsonData, err := json.Marshal(data.Predictions)
+	if err != nil {
+		return "", err
+	}
+
+	writeBack(string(jsonData), nil)
 }
