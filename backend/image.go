@@ -174,11 +174,13 @@ var boundingBoxes []BoundingBox = nil
 
 func ReindexImage(payload string) ([]BoundingBox, error) {
 	// Prepare the HTTP request
-	apiURL := "https://detect.roboflow.com/ui-screenshots/1?api_key=icHlGR6hm7WYll77q6bh"
+	apiURL := "https://detect.roboflow.com/ui-screenshots/1?api_key=JF6f1jrJCX2C3wG94y8b"
+	fmt.Println("reached")
 	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer([]byte(payload)))
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("YOOOOOO")
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
@@ -197,12 +199,12 @@ func ReindexImage(payload string) ([]BoundingBox, error) {
 	}
 
 	var data ResponseData
+	fmt.Println(string(body))
 	err = json.Unmarshal(body, &data)
 	if err != nil {
 		return nil, err
 	}
 
 	boundingBoxes = data.BoundingBox
-
 	return data.BoundingBox, nil
 }
