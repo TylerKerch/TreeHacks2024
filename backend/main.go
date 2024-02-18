@@ -153,11 +153,8 @@ func processMessage() error {
 			return nil
 		case VOICE_OVER:
 			go ReindexImage(incomingMessage.Payload)
-
-			if current_step_count == 0 {
-				voiceMessage := ImageDescription(incomingMessage.Payload)
-				go writeBack(VOICE_OVER, voiceMessage)
-			}
+			voiceMessage := ImageDescription(incomingMessage.Payload)
+			go writeBack(VOICE_OVER, voiceMessage)
 
 			return nil
 		}
