@@ -5,11 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+
 	// "io"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
+	"github.com/lpernett/godotenv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -25,13 +28,15 @@ var upgrader = websocket.Upgrader{
 }
 
 const PORT = 8080
-const CLIP_URL = "https://runtime.sagemaker.us-east-1.amazonaws.com/endpoints/clip-image-model-2023-02-11-06-16-48-670/invocations"
 
 type MessageType uint
 
 const (
 	SCREENSHOT = iota
 	QUERY
+	CLEAR_BOUNDING_BOXES
+	VOICE_OVER
+	DRAW_BOXES
 	INVALID
 )
 
@@ -73,7 +78,7 @@ func processMessage(conn *websocket.Conn) error {
 	}
 
 	var ourMessageType MessageType
-	var messageContents string
+	// var messageContents string
 
 	if wsMessageType == websocket.TextMessage {
 		if len(message) > 0 {
@@ -94,54 +99,30 @@ func processMessage(conn *websocket.Conn) error {
 		return errors.New("received an invalid message type. Please make sure the first byte is correct")
 	}
 
-	messageContents = string(message[1:])
-	log.Println(messageContents)
-
 	switch ourMessageType {
 	case SCREENSHOT:
-		// do something
+
+		fmt.Println("Received screenshot")
+
 		result, err := sagemakerClient.InvokeEndpoint(&sagemakerruntime.InvokeEndpointInput{
-			Body:         image,
+			Body:         message[1:],
 			EndpointName: aws.String("clip-image-model-2023-02-11-06-16-48-670"),
 			ContentType:  aws.String("application/x-image"),
 		})
 		if err != nil {
-
+			log.Println(err)
+			return errors.New("failed to call Sagemaker (CLIP) endpoint")
 		}
+
+		fmt.Println("Request finished")
 
 		embedding, err := ConvertBodyToVector(result.Body)
 		if err != nil {
-
+			return errors.New("failed to convert body to vector from (CLIP) model")
 		}
 		embedding = Normalize(embedding)
 
-		// postBody, _ := json.Marshal(map[string]string{
-		// 	"inputs":           messageContents,
-		// 	"candidate_labels": "",
-		// })
-
-		// responseBody := bytes.NewBuffer(postBody)
-		// req, err := http.NewRequest("POST", CLIP_URL, responseBody)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// req.Header.Set("Authorization", "Bearer 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")
-
-		// client := &http.Client{}
-		// resp, err := client.Do(req)
-
-		// if err != nil {
-		// 	return err
-		// }
-		// defer resp.Body.Close()
-
-		// body, err := io.ReadAll(resp.Body)
-		// if err != nil {
-		// 	return err
-		// }
-
-		fmt.Printf("embedding: \n %s\n", embedding)
+		fmt.Println(embedding)
 
 	case QUERY:
 		// do something else
@@ -168,13 +149,27 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		panic("Environment variable(s) couldn't be loaded")
+	}
+
+	var access_token = os.Getenv("ACCESS_TOKEN")
+	var secret_access_token = os.Getenv("SECRET_ACCESS_TOKEN")
+
+	if access_token == "" || secret_access_token == "" {
+		panic("Environment variable(s) missing")
+	}
+
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("us-east-1"),
-		Credentials: credentials.NewStaticCredentials("", "", ""),
+		Credentials: credentials.NewStaticCredentials(access_token, secret_access_token, ""),
 	})
+
 	if err != nil {
-		// Handle session creation error
+		panic("Error creating AWS config")
 	}
+
 	sagemakerClient = sagemakerruntime.New(sess)
 
 	http.HandleFunc("/ws", handleWebSocket)
