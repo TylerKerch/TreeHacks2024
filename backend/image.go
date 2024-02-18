@@ -88,6 +88,10 @@ func ImageDescription(base64_image string) string {
 		return ""
 	}
 
+	if len(apiResponse.Choices) == 0 {
+		fmt.Println("No choices")
+		return ""
+	}
 	content := apiResponse.Choices[0].Message.Content
 	fmt.Println("Content:", content)
 	return content
