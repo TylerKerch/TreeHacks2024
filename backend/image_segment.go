@@ -30,7 +30,7 @@ type CLIPPrediction struct {
 	Height      float64 `json:"height"`
 	Class       string  `json:"class"`
 	DetectionId int     `json:"detection_id"`
-	Similarity  string  `json:"similarity"`
+	Similarity  float64  `json:"similarity"`
 }
 
 func tagImageBoxes(b64image string, textQuery string) ([]CLIPPrediction, error) {
@@ -64,8 +64,10 @@ func tagImageBoxes(b64image string, textQuery string) ([]CLIPPrediction, error) 
 	}
 
 	var tags TagBoxesResponse
+	fmt.Println(string(body))
 	err = json.Unmarshal(body, &tags)
 	if err != nil {
+		fmt.Println("Error: ", err)
 		return nil, errors.New(err.Error())
 	}
 

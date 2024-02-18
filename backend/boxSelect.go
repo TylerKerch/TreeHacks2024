@@ -21,9 +21,9 @@ type SelectedCropped struct {
 	Y           float64 `json:"y"`
 	Width       float64 `json:"width"`
 	Height      float64 `json:"height"`
-	Class       string  `json:"class"`
-	DetectionId int     `json:"detection_id"`
-	Similarity  string  `json:"similarity"`
+	Type        string  `json:"type"`
+	DetectionId int     `json:"detectionID"`
+	Similarity  float64  `json:"similarity"`
 	Text 		string  `json:"text"`
 }
 
@@ -34,7 +34,7 @@ func convertToSelectedCropped(prediction CLIPPrediction, text string) SelectedCr
 		Y:           prediction.Y,
 		Width:       prediction.Width,
 		Height:      prediction.Height,
-		Class:       prediction.Class,
+		Type:        prediction.Class,
 		DetectionId: prediction.DetectionId,
 		Similarity:  prediction.Similarity,
 		Text:        text,
@@ -75,9 +75,12 @@ func cropImageBase64(imageBase64 string, x, y, width, height float64) string {
 
 func getClosestBox(imageBase64 string, textQuery string) SelectedCropped {
 	predictions, _ := tagImageBoxes(imageBase64, textQuery)
+	fmt.Println(predictions)
 	selection := predictions[0]
 	selectedCropped := cropImageBase64(imageBase64, selection.X, selection.Y, selection.Width, selection.Height)
 	textCaption := SubImageDescription(imageBase64, selectedCropped)
+	fmt.Println(selection)
+	fmt.Println(textCaption)
 	return convertToSelectedCropped(selection, textCaption)
 }
 

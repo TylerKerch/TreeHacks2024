@@ -64,23 +64,27 @@ def process_image():
     image_base64 = data['image_base64']
     text_query = data['text_query']
     predictions = data['predictions']
-
+    print(text_query)
+    print(predictions)
     try:
+        print('reached')
         # Decode the Base64 encoded image
         image_data = base64.b64decode(image_base64)
+        print('reached')
         image = Image.open(io.BytesIO(image_data))
-
+        print('reached')
         # Process the text query
         text_input = processor(text=text_query, return_tensors="pt", padding=True)
+        print('reached')
         text_features = model.get_text_features(**text_input)
-
+        print('reached')
         batch_size = 32
         sub_image_batches = []
         batch_predictions = []
-
         for detection_id, prediction in enumerate(predictions):
             x, y, width, height = prediction['x'], prediction['y'], prediction['width'], prediction['height']
-            sub_image = image.crop((x-width/2, y-height/2, x + width/2, y + height/2))
+            print(x,y,width,height)
+            sub_image = image.crop((max(0,x-width/2), max(0,y-height/2), min(image.width, x + width/2), min(image.height, y + height/2)))
             sub_image_batches.append(sub_image)
             prediction['detection_id'] = detection_id
             batch_predictions.append(prediction)
