@@ -8,7 +8,7 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"log"
-	"math"
+	// "math"
 	"bytes"
 )
 
@@ -34,30 +34,30 @@ func Normalize(v []float64) []float64 {
 	return vec.RawVector().Data
 }
 
-func dotProduct(vectorA, vectorB []float64) float64 {
-	var sum float64
-	for i := range vectorA {
-		sum += vectorA[i] * vectorB[i]
-	}
-	return sum
-}
+// func dotProduct(vectorA, vectorB []float64) float64 {
+// 	var sum float64
+// 	for i := range vectorA {
+// 		sum += vectorA[i] * vectorB[i]
+// 	}
+// 	return sum
+// }
 
-// Function to calculate the magnitude (or norm) of a vector
-func magnitude(vector []float64) float64 {
-	var sum float64
-	for _, v := range vector {
-		sum += v * v
-	}
-	return math.Sqrt(sum)
-}
+// // Function to calculate the magnitude (or norm) of a vector
+// func magnitude(vector []float64) float64 {
+// 	var sum float64
+// 	for _, v := range vector {
+// 		sum += v * v
+// 	}
+// 	return math.Sqrt(sum)
+// }
 
-// Function to calculate cosine similarity between two vectors
-func cosineSimilarity(vectorA, vectorB []float64) float64 {
-	dot := dotProduct(vectorA, vectorB)
-	magA := magnitude(vectorA)
-	magB := magnitude(vectorB)
-	return dot / (magA * magB)
-}
+// // Function to calculate cosine similarity between two vectors
+// func cosineSimilarity(vectorA, vectorB []float64) float64 {
+// 	dot := dotProduct(vectorA, vectorB)
+// 	magA := magnitude(vectorA)
+// 	magB := magnitude(vectorB)
+// 	return dot / (magA * magB)
+// }
 
 // bytesToImage converts a byte slice into an image.Image.
 func bytesToImage(b []byte) (image.Image, error) {
@@ -105,14 +105,15 @@ func compareVectors(imgData1 []byte, imgData2 []byte) float64 {
 }
 
 func CompareVectors(v1 []float64, v2 []float64, b1 []byte, b2 []byte) string {
-	similarity := cosineSimilarity(v1, v2)
-	ret := compareVectors(b1, b2)
-	fmt.Println(ret)
-	if similarity < 0.85 {
+	// similarity := cosineSimilarity(v1, v2)
+	similarity := compareVectors(b1, b2)
+	fmt.Println(similarity)
+
+	if similarity < 85 {
 		return VOICE_OVER
 	}
 
-	if similarity < 0.99 {
+	if similarity < 95 {
 		return REINDEX
 	}
 

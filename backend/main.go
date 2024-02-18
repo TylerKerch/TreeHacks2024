@@ -57,8 +57,8 @@ var previous_image []byte = nil
 var conn *websocket.Conn
 var current_screen_image string
 
-var current_global_query string        // reset me on new query
-var step_channel chan (bool) = nil     // reset me on new query
+var current_global_query string    // reset me on new query
+var step_channel chan (bool) = nil // reset me on new query
 var difference_detected chan (bool) = make(chan bool, 1)
 var current_step_count = 0             // reset me on new query
 var current_context_window string = "" // reset me on new query
@@ -137,7 +137,10 @@ func processMessage() error {
 		fmt.Printf("Next action: %s\n", next_action)
 		// If we're waiting for a subquery, we can't do anything else.
 		if next_action != NOTHING {
-			difference_detected <- true
+			select {
+			case difference_detected <- true:
+			default:
+			}
 		}
 
 		switch next_action {
@@ -149,7 +152,6 @@ func processMessage() error {
 			return nil
 		case VOICE_OVER:
 			// go ReindexImage(incomingMessage.Payload)
-
 			voiceMessage := ImageDescription(incomingMessage.Payload)
 			go writeBack(VOICE_OVER, voiceMessage)
 			return nil
@@ -168,6 +170,7 @@ func processMessage() error {
 			for {
 				select {
 				case <-step_channel:
+					log.Println("Finished this query. Giving up now.")
 					return
 				default:
 					fmt.Println("Waiting for difference...")
