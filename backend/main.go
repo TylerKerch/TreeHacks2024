@@ -123,7 +123,7 @@ func processMessage() error {
 			return errors.New("failed to convert body to vector from (CLIP) model")
 		}
 		embedding = Normalize(embedding)
-		current_image := result.Body
+		current_image := decodedBytes
 
 		fmt.Println("Normalized embedding")
 		next_action := VOICE_OVER
