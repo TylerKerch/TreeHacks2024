@@ -2,7 +2,6 @@ import Cocoa
 
 class ScreenReader {
     static func readScreenContents() {
-        
         let screenRect = NSScreen.main?.frame ?? CGRect.zero
         guard let image = CGWindowListCreateImage(screenRect, .optionOnScreenOnly, kCGNullWindowID, [.bestResolution, .boundsIgnoreFraming]) else { return }
         
