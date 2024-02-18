@@ -122,13 +122,15 @@ func processMessage() error {
 		}
 		embedding = Normalize(embedding)
 
+		fmt.Println("Normalized embedding")
 		next_action := VOICE_OVER
+
 		if previous_embedding != nil {
 			next_action = CompareVectors(previous_embedding, embedding)
 		}
-
 		previous_embedding = embedding
 
+		fmt.Printf("Next action: %s\n", next_action)
 		// If we're waiting for a subquery, we can't do anything else.
 		if next_action != NOTHING {
 			difference_detected <- true
@@ -164,7 +166,9 @@ func processMessage() error {
 				case <-step_channel:
 					return
 				default:
+					fmt.Println("Waiting for difference...")
 					<-difference_detected
+					fmt.Println("Difference detected!")
 
 					// Event loop
 					nextStep := GetQueryNextStep(QueryNextStepContext{
