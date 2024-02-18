@@ -1,15 +1,16 @@
 package main
 
 import (
-	// "bytes"
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-
-	// "io"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"treehacks/backend/constants"
 
 	"github.com/gorilla/websocket"
 	"github.com/lpernett/godotenv"
@@ -38,6 +39,8 @@ const (
 	VOICE_OVER
 	DRAW_BOXES
 	INVALID
+	GPT4V_MODEL_ENGINE = "gpt-4-vision-preview"
+	GPT4V_OPENAI_URL = "https://api.openai.com/v1/chat/completions"
 )
 
 var sess *session.Session
@@ -130,6 +133,92 @@ func processMessage(conn *websocket.Conn) error {
 
 	return err
 }
+// ConvertImageToBase64 takes the path of an image file and returns its base64 encoded string.
+func ConvertImageToBase64(imagePath string) (string, error) {
+	// Read the file into a byte slice
+	imageBytes, err := os.ReadFile(imagePath)
+	if err != nil {
+		return "", err
+	}
+
+	// Encode the byte slice to base64
+	base64Image := base64.StdEncoding.EncodeToString(imageBytes)
+
+	return base64Image, nil
+}
+
+func imageDescription(base64_image string) string {
+	context := constants.CONTEXT
+	prompt := "What's in this image?"
+	maxTokens := 2048
+	var headers = map[string]string{
+		"Authorization": "Bearer " + os.Getenv("OPEN_AI_API_KEY"),
+		"Content-Type":  "application/json",
+	}
+
+	data := map[string]interface{}{
+		"model": GPT4V_MODEL_ENGINE,
+		"messages": []map[string]interface{}{
+			{"role": "system", "content": context},
+			{"role": "user", "content": []map[string]string{
+				{"type": "text", "text": prompt},
+				{"type": "image_url", "image_url": "data:image/jpeg;base64,"+base64_image},
+			}},
+		},
+		"max_tokens": maxTokens,
+	}
+	// Convert data to JSON
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println("Error encoding JSON:", err)
+		return ""
+	}
+
+	// Create new request
+	req, err := http.NewRequest("POST", GPT4V_OPENAI_URL, bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return ""
+	}
+
+	// Add headers
+	for key, value := range headers {
+		req.Header.Add(key, value)
+	}
+
+	// Make the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error making request:", err)
+		return ""
+	}
+	defer resp.Body.Close()
+
+	// Read the response
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return ""
+	}
+	// ApiResponse mirrors the JSON structure of the response
+	type ApiResponse struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+    var apiResponse ApiResponse
+    if err := json.Unmarshal(body, &apiResponse); err != nil {
+        fmt.Println("Error unmarshaling response body:", err)
+        return ""
+    }
+
+	content := apiResponse.Choices[0].Message.Content
+	fmt.Println("Content:", content)
+	return content
+}
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil) // Upgrade the connection to a WebSocket.
@@ -153,6 +242,14 @@ func main() {
 	if err != nil {
 		panic("Environment variable(s) couldn't be loaded")
 	}
+
+	imagePath := "image.png"
+	base64Image, err := ConvertImageToBase64(imagePath)
+	if err != nil {
+		fmt.Println("Failed to convert image to base64:", err)
+		return
+	}
+	imageDescription(base64Image)
 
 	var access_token = os.Getenv("ACCESS_TOKEN")
 	var secret_access_token = os.Getenv("SECRET_ACCESS_TOKEN")
