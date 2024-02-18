@@ -5,17 +5,19 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+
 	// "io"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
+	"github.com/lpernett/godotenv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sagemakerruntime"
-	"gonum.org/v1/gonum/mat"
 )
 
 var upgrader = websocket.Upgrader{
@@ -25,45 +27,44 @@ var upgrader = websocket.Upgrader{
 }
 
 const PORT = 8080
-const CLIP_URL = "https://runtime.sagemaker.us-east-1.amazonaws.com/endpoints/clip-image-model-2023-02-11-06-16-48-670/invocations"
 
-type MessageType uint
+type MessageContents struct {
+	Type    string `json:"type"`
+	Payload string `json:"payload"`
+}
 
 const (
-	SCREENSHOT = iota
-	QUERY
-	INVALID
+	SCREENSHOT           = "IMAGE"
+	QUERY                = "QUERY"
+	CLEAR_BOUNDING_BOXES = "C"
+	VOICE_OVER           = "VOICE"
+	DRAW_BOXES           = "DRAW"
+
+	// Internal
+	REINDEX = "REI"
+	NOTHING = "NONE"
 )
 
 var sess *session.Session
 var sagemakerClient *sagemakerruntime.SageMakerRuntime
+var previousEmbedding []float64 = nil
 
-// func writeBack(conn *websocket.Conn, message MessageType) {
-// 	m := "test"
+func writeBack(conn *websocket.Conn, message string, payload string) {
+	// m := "test"
 
-// 	conn.WriteMessage(messageType, m)
-// }
-
-func ConvertBodyToVector(body []byte) ([]float64, error) {
-	var result [][]float64
-	if err := json.Unmarshal(body, &result); err != nil {
-		return nil, err
-	}
-	return result[0], nil
+	// conn.WriteMessage(messageType, m)
 }
 
-func Normalize(v []float64) []float64 {
-	vec := mat.NewVecDense(len(v), v)
+func ReindexImage(payload string) {
 
-	// Compute the l2 norm (Euclidean norm)
-	norm := mat.Norm(vec, 2)
+}
 
-	// Normalize the vector
-	if norm != 0 {
-		vec.ScaleVec(1/norm, vec)
-	}
+func GenerateVoiceover(payload string) string {
+	// get voiceover from GPT4
 
-	return vec.RawVector().Data
+	// goroutine that fires a message over the network
+
+	return ""
 }
 
 func processMessage(conn *websocket.Conn) error {
@@ -72,79 +73,65 @@ func processMessage(conn *websocket.Conn) error {
 		return err
 	}
 
-	var ourMessageType MessageType
-	var messageContents string
+	var incomingMessage MessageContents
 
 	if wsMessageType == websocket.TextMessage {
-		if len(message) > 0 {
-			switch firstByte := message[0]; firstByte {
-			case '0':
-				ourMessageType = SCREENSHOT
-			case '1':
-				ourMessageType = QUERY
-			default:
-				ourMessageType = INVALID
-			}
+		err := json.Unmarshal(message, &incomingMessage)
+		if err != nil {
+			return err
 		}
 	} else {
-		return errors.New("WS message was not in a binary form")
+		return errors.New("WS message was not in a JSON form")
 	}
 
-	if ourMessageType == INVALID {
-		return errors.New("received an invalid message type. Please make sure the first byte is correct")
-	}
-
-	messageContents = string(message[1:])
-	log.Println(messageContents)
-
-	switch ourMessageType {
+	switch incomingMessage.Type {
 	case SCREENSHOT:
-		// do something
+
+		log.Println("Received screenshot", incomingMessage.Payload)
+
 		result, err := sagemakerClient.InvokeEndpoint(&sagemakerruntime.InvokeEndpointInput{
-			Body:         image,
+			Body:         []byte(incomingMessage.Payload),
 			EndpointName: aws.String("clip-image-model-2023-02-11-06-16-48-670"),
 			ContentType:  aws.String("application/x-image"),
 		})
 		if err != nil {
-
+			log.Println(err)
+			return errors.New("failed to call Sagemaker (CLIP) endpoint")
 		}
+
+		log.Println("Request finished")
 
 		embedding, err := ConvertBodyToVector(result.Body)
 		if err != nil {
-
+			return errors.New("failed to convert body to vector from (CLIP) model")
 		}
 		embedding = Normalize(embedding)
 
-		// postBody, _ := json.Marshal(map[string]string{
-		// 	"inputs":           messageContents,
-		// 	"candidate_labels": "",
-		// })
+		next_action := NOTHING
 
-		// responseBody := bytes.NewBuffer(postBody)
-		// req, err := http.NewRequest("POST", CLIP_URL, responseBody)
-		// if err != nil {
-		// 	return err
-		// }
+		if previousEmbedding == nil {
+			next_action = VOICE_OVER
+		} else {
+			next_action = CompareVectors(previousEmbedding, embedding)
+		}
 
-		// req.Header.Set("Authorization", "Bearer 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")
+		previousEmbedding = embedding
+		log.Println(next_action)
 
-		// client := &http.Client{}
-		// resp, err := client.Do(req)
-
-		// if err != nil {
-		// 	return err
-		// }
-		// defer resp.Body.Close()
-
-		// body, err := io.ReadAll(resp.Body)
-		// if err != nil {
-		// 	return err
-		// }
-
-		fmt.Printf("embedding: \n %s\n", embedding)
-
+		switch next_action {
+		case NOTHING:
+			return nil
+		case REINDEX:
+			go ReindexImage(incomingMessage.Payload)
+			return nil
+		case VOICE_OVER:
+			go ReindexImage(incomingMessage.Payload)
+			voiceMessage := GenerateVoiceover(incomingMessage.Payload)
+			go writeBack(conn, VOICE_OVER, voiceMessage)
+			return nil
+		}
 	case QUERY:
-		// do something else
+
 	}
 
 	return err
@@ -168,13 +155,27 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		panic("Environment variable(s) couldn't be loaded")
+	}
+
+	var access_token = os.Getenv("ACCESS_TOKEN")
+	var secret_access_token = os.Getenv("SECRET_ACCESS_TOKEN")
+
+	if access_token == "" || secret_access_token == "" {
+		panic("Environment variable(s) missing")
+	}
+
 	sess, err := session.NewSession(&aws.Config{
 		Region:      aws.String("us-east-1"),
-		Credentials: credentials.NewStaticCredentials("", "", ""),
+		Credentials: credentials.NewStaticCredentials(access_token, secret_access_token, ""),
 	})
+
 	if err != nil {
-		// Handle session creation error
+		panic("Error creating AWS config")
 	}
+
 	sagemakerClient = sagemakerruntime.New(sess)
 
 	http.HandleFunc("/ws", handleWebSocket)
