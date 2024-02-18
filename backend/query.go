@@ -35,11 +35,13 @@ func GetQueryNextStep(args QueryNextStepContext) QueryStep {
 		prompt = fmt.Sprintf("I am on the following page. I want to explain to a friend '%s'.  Tell me just the first step to achieve this and get to the next step. Be brief. If I have reached the last step, say 'LAST STEP', but otherwise do not.", current_global_query)
 	}
 
-	maxTokens := 128000
+	maxTokens := 2048
 	var headers = map[string]string{
 		"Authorization": "Bearer " + os.Getenv("OPEN_AI_API_KEY"),
 		"Content-Type":  "application/json",
 	}
+
+	image_url := UploadBase64Image(current_screen_image)
 
 	data := map[string]interface{}{
 		"model": GPT4V_MODEL_ENGINE,
@@ -49,7 +51,7 @@ func GetQueryNextStep(args QueryNextStepContext) QueryStep {
 				"role": "user",
 				"content": []map[string]string{
 					{"type": "text", "text": prompt},
-					{"type": "image_url", "image_url": "data:image/jpeg;base64," + current_screen_image},
+					{"type": "image_url", "image_url": image_url},
 				},
 			},
 		},
@@ -65,6 +67,7 @@ func GetQueryNextStep(args QueryNextStepContext) QueryStep {
 	if err != nil {
 		return QueryStep{Err: errors.New("error creating request")}
 	}
+	log.Println("Called OpenAI")
 
 	for key, value := range headers {
 		req.Header.Add(key, value)

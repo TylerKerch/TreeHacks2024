@@ -5,11 +5,57 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"treehacks/backend/constants"
 )
+
+func UploadBase64Image(image string) string {
+
+	data := map[string]interface{}{
+		"imageBase64": image,
+		"filename":    "img_" + uuid.New().String() + ".jpg",
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println("Error encoding JSON:", err)
+		return ""
+	}
+
+	var headers = map[string]string{
+		"Content-Type":  "application/json",
+	}
+	req, err := http.NewRequest("POST", "https://real-bug-pet.ngrok-free.app/upload", bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return ""
+	}
+	for key, value := range headers {
+		req.Header.Add(key, value)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error making request:", err)
+		return ""
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	log.Println(body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return ""
+	}
+
+	return string(body)
+
+}
 
 // ConvertImageToBase64 takes the path of an image file and returns its base64 encoded string.
 func ConvertImageToBase64(imagePath string) (string, error) {
@@ -34,13 +80,15 @@ func ImageDescription(base64_image string) string {
 		"Content-Type":  "application/json",
 	}
 
+	image_url := UploadBase64Image(base64_image)
+
 	data := map[string]interface{}{
 		"model": GPT4V_MODEL_ENGINE,
 		"messages": []map[string]interface{}{
 			{"role": "system", "content": context},
 			{"role": "user", "content": []map[string]string{
 				{"type": "text", "text": prompt},
-				{"type": "image_url", "image_url": "data:image/jpeg;base64," + base64_image},
+				{"type": "image_url", "image_url": image_url},
 			}},
 		},
 		"max_tokens": maxTokens,
@@ -57,6 +105,7 @@ func ImageDescription(base64_image string) string {
 		fmt.Println("Error creating request:", err)
 		return ""
 	}
+	log.Println("Called OpenAI")
 
 	for key, value := range headers {
 		req.Header.Add(key, value)
@@ -89,9 +138,10 @@ func ImageDescription(base64_image string) string {
 	}
 
 	if len(apiResponse.Choices) == 0 {
-		fmt.Println("No choices")
+		fmt.Println("No choices in response, error here: ", string(body))
 		return ""
 	}
+
 	content := apiResponse.Choices[0].Message.Content
 	fmt.Println("Content (Global Voiceover): ", content)
 	return content
@@ -104,7 +154,7 @@ type ImageData struct {
 }
 
 // Define the struct for each prediction
-type Prediction struct {
+type BoundingBox struct {
 	X      float64 `json:"x"`
 	Y      float64 `json:"y"`
 	Width  float64 `json:"width"`
@@ -116,10 +166,12 @@ type Prediction struct {
 type ResponseData struct {
 	Time        float64      `json:"time"`
 	Image       ImageData    `json:"image"`
-	Predictions []Prediction `json:"predictions"`
+	BoundingBox []BoundingBox `json:"predictions"`
 }
 
-func ReindexImage(payload string) ([]Prediction, error) {
+var boundingBoxes []BoundingBox = nil
+
+func ReindexImage(payload string) ([]BoundingBox, error) {
 	// Prepare the HTTP request
 	apiURL := "https://detect.roboflow.com/ui-screenshots/1?api_key=icHlGR6hm7WYll77q6bh"
 	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer([]byte(payload)))
@@ -149,5 +201,7 @@ func ReindexImage(payload string) ([]Prediction, error) {
 		return nil, err
 	}
 
-	return data.Predictions, nil
+	boundingBoxes = data.BoundingBox
+	
+	return data.BoundingBox, nil
 }

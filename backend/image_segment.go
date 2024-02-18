@@ -49,7 +49,7 @@ func cropImage(img image.Image, rect image.Rectangle) (image.Image, error) {
 type TagBoxesPayload struct {
 	ImageBase64 string       `json:"image_base64"`
 	TextQuery   string       `json:"text_query"`
-	Predictions []Prediction `json:"predictions"`
+	Predictions []BoundingBox `json:"predictions"`
 }
 
 type TagBoxesResponse struct {
@@ -57,21 +57,21 @@ type TagBoxesResponse struct {
 }
 
 type CLIPPrediction struct {
-	X      float64 `json:"x"`
-	Y      float64 `json:"y"`
-	Width  float64 `json:"width"`
-	Height float64 `json:"height"`
-	Class  string  `json:"class"`
-	DetectionId  int  `json:"detection_id"`
+	X           float64 `json:"x"`
+	Y           float64 `json:"y"`
+	Width       float64 `json:"width"`
+	Height      float64 `json:"height"`
+	Class       string  `json:"class"`
+	DetectionId int     `json:"detection_id"`
 	Similarity  string  `json:"similarity"`
 }
 
-func tagImageBoxes(b64image string, predictions []Prediction) ([]CLIPPrediction, error) {
+func tagImageBoxes(b64image string, textQuery string) ([]CLIPPrediction, error) {
 	// Construct the payload
-	payload := TagBoxesPayload {
+	payload := TagBoxesPayload{
 		ImageBase64: b64image,
-		TextQuery:   "Where is the search bar?",
-		Predictions: predictions,
+		TextQuery:   textQuery,
+		Predictions: boundingBoxes,
 	}
 
 	// Marshal the payload into JSON
@@ -96,16 +96,14 @@ func tagImageBoxes(b64image string, predictions []Prediction) ([]CLIPPrediction,
 		return nil, errors.New(err.Error())
 	}
 
-	
 	var tags TagBoxesResponse
 	err = json.Unmarshal(body, &tags)
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
-	
+
 	fmt.Println("Response:", len(tags.Predictions))
 	return tags.Predictions, nil
-
 
 	// Decode the base64 image
 	// img, err := decodeBase64Image(b64image)

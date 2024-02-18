@@ -1,12 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -55,6 +54,7 @@ const (
 
 var sagemaker_client *sagemakerruntime.SageMakerRuntime
 var previous_embedding []float64 = nil
+var previous_image []byte = nil
 var conn *websocket.Conn
 var current_screen_image string
 
@@ -76,60 +76,6 @@ func writeBack(messageType string, payload string) {
 	if err != nil {
 		log.Println(err)
 	}
-}
-
-type TagPayload struct {
-	ImageBase64 string `json:"image_base64"`
-}
-
-type TagResponse struct {
-	Embedding []float64 `json:"embedding"`
-}
-
-func tagImage(b64image string) ([]float64, error) {
-	startTime := time.Now()
-	payload := TagPayload{
-		ImageBase64: b64image,
-	}
-
-	// Marshal the payload into JSON
-	jsonData, err := json.Marshal(payload)
-	if err != nil {
-		return nil, errors.New(err.Error())
-	}
-
-	// Make the HTTP POST request
-	resp, err := http.Post("http://localhost:8081/process-image", "application/json", bytes.NewBuffer(jsonData))
-	if err != nil {
-		return nil, errors.New(err.Error())
-	}
-	defer resp.Body.Close()
-
-	// Read the response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, errors.New(err.Error())
-	}
-
-	fmt.Println("Response:", string(body))
-
-	elapsedTime := time.Since(startTime)
-	fmt.Printf("The function took %s to execute.\n", elapsedTime)
-
-	log.Println("Request finished")
-
-	var embedding TagResponse
-	err = json.Unmarshal(body, &embedding)
-	if err != nil {
-		return nil, errors.New(err.Error())
-	}
-
-	// embedding, err := ConvertBodyToVector(result.Body)
-	// if err != nil {
-	// 	return nil, errors.New("failed to convert body to vector from (CLIP) model")
-	// }
-	// embedding = Normalize(embedding)
-	return embedding.Embedding, nil
 }
 
 func processMessage() error {
@@ -154,23 +100,48 @@ func processMessage() error {
 		log.Print("Received screenshot")
 
 		current_screen_image = incomingMessage.Payload
-
-		embedding, err := tagImage(incomingMessage.Payload)
+		decodedBytes, err := base64.StdEncoding.DecodeString(incomingMessage.Payload)
 		if err != nil {
-			return errors.New(err.Error())
+			return err
 		}
 
+		startTime := time.Now()
+
+		result, err := sagemaker_client.InvokeEndpoint(&sagemakerruntime.InvokeEndpointInput{
+			Body:         decodedBytes,
+			EndpointName: aws.String("clip-image-model-2023-02-11-06-16-48-670"),
+			ContentType:  aws.String("application/x-image"),
+		})
+		if err != nil {
+			return errors.New("failed to call Sagemaker (CLIP) endpoint")
+		}
+
+		elapsedTime := time.Since(startTime)
+		fmt.Printf("CLIP took %s to execute.\n", elapsedTime)
+
+		embedding, err := ConvertBodyToVector(result.Body)
+		if err != nil {
+			return errors.New("failed to convert body to vector from (CLIP) model")
+		}
+		embedding = Normalize(embedding)
+		current_image := decodedBytes
+
+		fmt.Println("Normalized embedding")
 		next_action := VOICE_OVER
 
 		if previous_embedding != nil {
-			next_action = CompareVectors(previous_embedding, embedding)
+			next_action = CompareVectors(previous_embedding, embedding, previous_image, current_image)
 		}
+		previous_image = current_image
 		previous_embedding = embedding
 
 		fmt.Printf("Next action: %s\n", next_action)
 		// If we're waiting for a subquery, we can't do anything else.
 		if next_action != NOTHING {
-			difference_detected <- true
+			select {
+			case difference_detected <- true:
+			default:
+			}
 		}
 
 		switch next_action {
@@ -178,11 +149,10 @@ func processMessage() error {
 			go writeBack(NOTHING, "")
 			return nil
 		case REINDEX:
-			// go ReindexImage(incomingMessage.Payload)
+			go ReindexImage(incomingMessage.Payload)
 			return nil
 		case VOICE_OVER:
-			// go ReindexImage(incomingMessage.Payload)
-
+			go ReindexImage(incomingMessage.Payload)
 			voiceMessage := ImageDescription(incomingMessage.Payload)
 			go writeBack(VOICE_OVER, voiceMessage)
 			return nil
@@ -201,6 +171,7 @@ func processMessage() error {
 			for {
 				select {
 				case <-step_channel:
+					log.Println("Finished this query. Giving up now.")
 					return
 				default:
 					fmt.Println("Waiting for difference...")
@@ -216,23 +187,23 @@ func processMessage() error {
 					})
 
 					text := nextStep.Text
-					err := nextStep.Err
-
-					if err != nil {
-						log.Println(err)
-					}
 
 					// We're done.
 					if text == "LAST STEP" || current_step_count > 10 {
 						step_channel <- true
 						continue
 					}
-					// closest_box := getClosestBox(text)
-					// writeBack(DRAW_BOXES, closest_box)
+					closestBox := getClosestBox(current_screen_image,text)
+					boxJSON, err := json.Marshal(closestBox)
+					if err != nil {
+						log.Println(err)
+					}
+					writeBack(DRAW_BOXES, string(boxJSON))
 
 					writeBack(VOICE_OVER, nextStep.Audio)
 					current_context_window += "\n" + nextStep.Text
 					current_step_count++
+					// log.Println(current_context_window)
 				}
 			}
 		}()
@@ -261,9 +232,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
+	ctx, _ := context.WithCancel(context.Background())
 	err := godotenv.Load()
 	if err != nil {
 		panic("Environment variable(s) couldn't be loaded")
@@ -300,4 +269,5 @@ func main() {
 	http.ListenAndServe(uri, nil)
 
 	ocrClosePool()
+
 }
