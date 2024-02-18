@@ -116,7 +116,7 @@ func processMessage() error {
 		}
 
 		elapsedTime := time.Since(startTime)
-		fmt.Printf("Clip took %s to execute.\n", elapsedTime)
+		fmt.Printf("CLIP took %s to execute.\n", elapsedTime)
 
 		embedding, err := ConvertBodyToVector(result.Body)
 		if err != nil {
