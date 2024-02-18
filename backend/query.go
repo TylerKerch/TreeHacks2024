@@ -44,11 +44,14 @@ func GetQueryNextStep(args QueryNextStepContext) QueryStep {
 	data := map[string]interface{}{
 		"model": GPT4V_MODEL_ENGINE,
 		"messages": []map[string]interface{}{
-			{"role": "user", "content": []map[string]string{
-				{"role": "system", "content": context},
-				{"type": "text", "text": prompt},
-				{"type": "image_url", "image_url": "data:image/jpeg;base64," + current_screen_image},
-			}},
+			{"role": "system", "content": context},
+			{
+				"role": "user",
+				"content": []map[string]string{
+					{"type": "text", "text": prompt},
+					{"type": "image_url", "image_url": "data:image/jpeg;base64," + current_screen_image},
+				},
+			},
 		},
 		"max_tokens": maxTokens,
 	}
@@ -87,6 +90,7 @@ func GetQueryNextStep(args QueryNextStepContext) QueryStep {
 				Content string `json:"content"`
 			} `json:"message"`
 		} `json:"choices"`
+		Index int `json:"index"`
 	}
 
 	var apiResponse ApiResponse
@@ -94,7 +98,10 @@ func GetQueryNextStep(args QueryNextStepContext) QueryStep {
 		return QueryStep{Err: errors.New("error unmarshaling response body for query")}
 	}
 
-	content := apiResponse.Choices[0].Message.Content
+	if len(apiResponse.Choices) < 1 {
+		return QueryStep{Err: errors.New("error with OpenAI API: " + string(body))}
+	}
 
+	content := apiResponse.Choices[0].Message.Content
 	return QueryStep{Text: content, Audio: content, Err: nil}
 }
