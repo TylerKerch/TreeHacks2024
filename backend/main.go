@@ -55,7 +55,7 @@ var conn *websocket.Conn
 
 func writeBack(messageType string, payload string) {
 	err := conn.WriteJSON(MessageContents{
-		Type:    message,
+		Type:    messageType,
 		Payload: payload,
 	})
 	if err != nil {
@@ -123,10 +123,19 @@ func processMessage() error {
 			go writeBack(NOTHING, "")
 			return nil
 		case REINDEX:
-			// go ReindexImage(incomingMessage.Payload)
+			jsonData, err := ReindexImage(incomingMessage.Payload)
+			if err != nil {
+				log.Println(err)
+			}
+
+			go writeBack(REINDEX, string(jsonData))
 			return nil
 		case VOICE_OVER:
-			// go ReindexImage(incomingMessage.Payload)
+			jsonData, err := ReindexImage(incomingMessage.Payload)
+			if err != nil {
+				log.Println(err)
+			}
+			go writeBack(REINDEX, string(jsonData))
 			voiceMessage := ImageDescription(incomingMessage.Payload)
 			go writeBack(VOICE_OVER, voiceMessage)
 			return nil

@@ -150,5 +150,5 @@ func ReindexImage(payload string) (string, error) {
 		return "", err
 	}
 
-	writeBack(string(jsonData), nil)
+	return string(jsonData), nil	
 }
