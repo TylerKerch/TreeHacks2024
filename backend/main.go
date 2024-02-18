@@ -149,10 +149,10 @@ func processMessage() error {
 			go writeBack(NOTHING, "")
 			return nil
 		case REINDEX:
-			// go ReindexImage(incomingMessage.Payload)
+			go ReindexImage(incomingMessage.Payload)
 			return nil
 		case VOICE_OVER:
-			// go ReindexImage(incomingMessage.Payload)
+			go ReindexImage(incomingMessage.Payload)
 			voiceMessage := ImageDescription(incomingMessage.Payload)
 			go writeBack(VOICE_OVER, voiceMessage)
 			return nil
@@ -193,8 +193,12 @@ func processMessage() error {
 						step_channel <- true
 						continue
 					}
-					// closest_box := getClosestBox(text)
-					// writeBack(DRAW_BOXES, closest_box)
+					closestBox := getClosestBox(current_screen_image,text)
+					boxJSON, err := json.Marshal(closestBox)
+					if err != nil {
+						log.Println(err)
+					}
+					writeBack(DRAW_BOXES, string(boxJSON))
 
 					writeBack(VOICE_OVER, nextStep.Audio)
 					current_context_window += "\n" + nextStep.Text

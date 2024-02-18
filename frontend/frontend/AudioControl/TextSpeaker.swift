@@ -20,7 +20,7 @@ class TextSpeaker {
         let utterance = AVSpeechUtterance(string: s)
                 
         // Configure properties of the utterance as needed:
-        utterance.voice = AVSpeechSynthesisVoice(language: "en-US") // Set to the appropriate language
+        utterance.voice = AVSpeechSynthesisVoice(language: "en-GB") // Set to the appropriate language
         utterance.rate = AVSpeechUtteranceDefaultSpeechRate // Adjust the speech rate as needed
         
         // Stop any ongoing speech and start speaking the new text
