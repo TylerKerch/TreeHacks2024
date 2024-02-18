@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"gonum.org/v1/gonum/mat"
 	"image"
+	_ "image/jpeg"
+	_ "image/png"
 	"log"
 	"math"
 	"bytes"

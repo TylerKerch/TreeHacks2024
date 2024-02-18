@@ -54,12 +54,12 @@ const (
 var sagemaker_client *sagemakerruntime.SageMakerRuntime
 var previous_embedding []float64 = nil
 var previous_image []byte = nil
-var previous_action string
 var conn *websocket.Conn
 var current_screen_image string
 
 var current_global_query string        // reset me on new query
 var step_channel chan (bool) = nil     // reset me on new query
+var difference_detected chan (bool) = make(chan bool, 1)
 var current_step_count = 0             // reset me on new query
 var current_context_window string = "" // reset me on new query
 
@@ -123,13 +123,20 @@ func processMessage() error {
 		embedding = Normalize(embedding)
 		current_image := result.Body
 
+		fmt.Println("Normalized embedding")
 		next_action := VOICE_OVER
+
 		if previous_embedding != nil {
 			next_action = CompareVectors(previous_embedding, embedding, previous_image, current_image)
 		}
 		previous_image = current_image
 		previous_embedding = embedding
-		previous_action = next_action
+
+		fmt.Printf("Next action: %s\n", next_action)
+		// If we're waiting for a subquery, we can't do anything else.
+		if next_action != NOTHING {
+			difference_detected <- true
+		}
 
 		switch next_action {
 		case NOTHING:
@@ -161,10 +168,9 @@ func processMessage() error {
 				case <-step_channel:
 					return
 				default:
-					if previous_action == NOTHING {
-						time.Sleep(1 * time.Second)
-						continue
-					}
+					fmt.Println("Waiting for difference...")
+					<-difference_detected
+					fmt.Println("Difference detected!")
 
 					// Event loop
 					nextStep := GetQueryNextStep(QueryNextStepContext{
