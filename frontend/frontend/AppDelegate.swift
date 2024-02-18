@@ -33,7 +33,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         
         // UNCOMMENT WHEN WE START CONNECTING W LOCALHOST
-//        scheduleScreenshotTimer()
+        scheduleScreenshotTimer()
         
         hotKeyVoiceRecorder = HotKey(key: .grave, modifiers: [])
         hotKeyVoiceRecorder?.keyDownHandler = {

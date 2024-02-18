@@ -60,11 +60,11 @@ class SocketModels {
     
     struct TextSpeechResponse: Decodable {
         let type: String
-        let message: String
+        let payload: String
         
         enum CodingKeys: String, CodingKey {
             case type = "type"
-            case message = "message"
+            case payload = "payload"
         }
     }
     

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -11,13 +12,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/websocket"
-	"github.com/lpernett/godotenv"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sagemakerruntime"
+	"github.com/gorilla/websocket"
+	"github.com/lpernett/godotenv"
 )
 
 var upgrader = websocket.Upgrader{
@@ -67,9 +67,9 @@ func UpdateContextWindow(global_query string) {
 	current_context_window = strings.Replace(FRESH_CONTEXT_WINDOW, "GLOBAL_QUERY", global_query, 1)
 }
 
-func writeBack(message string, payload string) {
+func writeBack(messageType string, payload string) {
 	err := conn.WriteJSON(MessageContents{
-		Type:    message,
+		Type:    messageType,
 		Payload: payload,
 	})
 	if err != nil {
@@ -136,10 +136,19 @@ func processMessage() error {
 			go writeBack(NOTHING, "")
 			return nil
 		case REINDEX:
-			// go ReindexImage(incomingMessage.Payload)
+			jsonData, err := ReindexImage(incomingMessage.Payload)
+			if err != nil {
+				log.Println(err)
+			}
+
+			go writeBack(REINDEX, string(jsonData))
 			return nil
 		case VOICE_OVER:
-			// go ReindexImage(incomingMessage.Payload)
+			jsonData, err := ReindexImage(incomingMessage.Payload)
+			if err != nil {
+				log.Println(err)
+			}
+			go writeBack(REINDEX, string(jsonData))
 			voiceMessage := ImageDescription(incomingMessage.Payload)
 			go writeBack(VOICE_OVER, voiceMessage)
 			return nil
@@ -183,6 +192,7 @@ func processMessage() error {
 	return err
 }
 
+
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	connection, err := upgrader.Upgrade(w, r, nil) // Upgrade the connection to a WebSocket.
 	if err != nil {
@@ -203,6 +213,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	ctx, _ := context.WithCancel(context.Background())
 	err := godotenv.Load()
 	if err != nil {
 		panic("Environment variable(s) couldn't be loaded")
@@ -227,9 +238,14 @@ func main() {
 
 	sagemaker_client = sagemakerruntime.New(sess)
 
+	ocrSetUp(ctx)
 	http.HandleFunc("/ws", handleWebSocket)
 	var uri = fmt.Sprintf("localhost:%d", PORT)
 
 	fmt.Println("Running WebSocket server on " + uri)
 	http.ListenAndServe(uri, nil)
+
+	ocrClosePool()
+
+	
 }
