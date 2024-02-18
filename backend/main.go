@@ -58,8 +58,9 @@ var previous_embedding []float64 = nil
 var conn *websocket.Conn
 var current_screen_image string
 
-var current_global_query string        // reset me on new query
-var step_channel chan (bool) = nil     // reset me on new query
+var current_global_query string    // reset me on new query
+var step_channel chan (bool) = nil // reset me on new query
+var difference_detected chan (bool) = make(chan bool, 1)
 var current_step_count = 0             // reset me on new query
 var current_context_window string = "" // reset me on new query
 
@@ -150,6 +151,11 @@ func processMessage() error {
 
 		previous_embedding = embedding
 
+		// If we're waiting for a subquery, we can't do anything else.
+		if next_action != NOTHING {
+			difference_detected <- true
+		}
+
 		switch next_action {
 		case NOTHING:
 			go writeBack(NOTHING, "")
@@ -180,6 +186,8 @@ func processMessage() error {
 				case <-step_channel:
 					return
 				default:
+					<-difference_detected
+
 					// Event loop
 					nextStep := GetQueryNextStep(QueryNextStepContext{
 						CurrentStep:          current_step_count,
@@ -191,7 +199,7 @@ func processMessage() error {
 					text := nextStep.Text
 
 					// We're done.
-					if text == "LAST STEP" {
+					if text == "LAST STEP" || current_step_count > 10 {
 						step_channel <- true
 						continue
 					}
@@ -200,7 +208,6 @@ func processMessage() error {
 
 					writeBack(VOICE_OVER, nextStep.Audio)
 					current_context_window += "\n" + nextStep.Text
-					log.Println(current_context_window)
 					current_step_count++
 				}
 			}
@@ -256,6 +263,10 @@ func main() {
 	sagemaker_client = sagemakerruntime.New(sess)
 
 	ocrSetUp(ctx)
+
+	imagePath := "image2.png" // Replace with the path to your image
+	base64String, _ := ConvertImageToBase64(imagePath)
+	textRecognition(ctx, base64String)
 	http.HandleFunc("/ws", handleWebSocket)
 	var uri = fmt.Sprintf("localhost:%d", PORT)
 
