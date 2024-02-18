@@ -93,7 +93,7 @@ func ImageDescription(base64_image string) string {
 		return ""
 	}
 	content := apiResponse.Choices[0].Message.Content
-	fmt.Println("Content:", content)
+	fmt.Println("Content (Global Voiceover): ", content)
 	return content
 }
 
@@ -150,12 +150,4 @@ func ReindexImage(payload string) ([]Prediction, error) {
 	}
 
 	return data.Predictions, nil
-
-	// jsonData, err := json.Marshal(data.Predictions)
-	// if err != nil {
-	// 	return "", err
-	// }
-
-	// return string(jsonData), nil	
 }
-
