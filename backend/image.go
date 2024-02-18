@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"treehacks/backend/constants"
@@ -57,6 +58,7 @@ func ImageDescription(base64_image string) string {
 		fmt.Println("Error creating request:", err)
 		return ""
 	}
+	log.Println("Called OpenAI")
 
 	for key, value := range headers {
 		req.Header.Add(key, value)

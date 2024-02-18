@@ -65,6 +65,7 @@ func GetQueryNextStep(args QueryNextStepContext) QueryStep {
 	if err != nil {
 		return QueryStep{Err: errors.New("error creating request")}
 	}
+	log.Println("Called OpenAI")
 
 	for key, value := range headers {
 		req.Header.Add(key, value)

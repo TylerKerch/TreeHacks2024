@@ -6,17 +6,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sagemakerruntime"
 	"github.com/gorilla/websocket"
 	"github.com/lpernett/godotenv"
-	"log"
-	"net/http"
-	"os"
-	"strings"
-	"time"
 )
 
 var upgrader = websocket.Upgrader{
