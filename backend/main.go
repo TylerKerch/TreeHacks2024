@@ -1,15 +1,21 @@
 package main
 
 import (
-	"bytes"
+	// "bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
+	// "io"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sagemakerruntime"
+	"gonum.org/v1/gonum/mat"
 )
 
 var upgrader = websocket.Upgrader{
@@ -29,11 +35,36 @@ const (
 	INVALID
 )
 
+var sess *session.Session
+var sagemakerClient *sagemakerruntime.SageMakerRuntime
+
 // func writeBack(conn *websocket.Conn, message MessageType) {
 // 	m := "test"
 
 // 	conn.WriteMessage(messageType, m)
 // }
+
+func ConvertBodyToVector(body []byte) ([]float64, error) {
+	var result [][]float64
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, err
+	}
+	return result[0], nil
+}
+
+func Normalize(v []float64) []float64 {
+	vec := mat.NewVecDense(len(v), v)
+
+	// Compute the l2 norm (Euclidean norm)
+	norm := mat.Norm(vec, 2)
+
+	// Normalize the vector
+	if norm != 0 {
+		vec.ScaleVec(1/norm, vec)
+	}
+
+	return vec.RawVector().Data
+}
 
 func processMessage(conn *websocket.Conn) error {
 	wsMessageType, message, err := conn.ReadMessage() // Read a message from the WebSocket.
@@ -69,33 +100,48 @@ func processMessage(conn *websocket.Conn) error {
 	switch ourMessageType {
 	case SCREENSHOT:
 		// do something
-		postBody, _ := json.Marshal(map[string]string{
-			"inputs":           messageContents,
-			"candidate_labels": "",
+		result, err := sagemakerClient.InvokeEndpoint(&sagemakerruntime.InvokeEndpointInput{
+			Body:         image,
+			EndpointName: aws.String("clip-image-model-2023-02-11-06-16-48-670"),
+			ContentType:  aws.String("application/x-image"),
 		})
-
-		responseBody := bytes.NewBuffer(postBody)
-		req, err := http.NewRequest("POST", CLIP_URL, responseBody)
 		if err != nil {
-			return err
+
 		}
 
-		req.Header.Set("Authorization", "Bearer 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")
-
-		client := &http.Client{}
-		resp, err := client.Do(req)
-
+		embedding, err := ConvertBodyToVector(result.Body)
 		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
 
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return err
 		}
+		embedding = Normalize(embedding)
 
-		fmt.Printf("embedding: \n %s\n", body)
+		// postBody, _ := json.Marshal(map[string]string{
+		// 	"inputs":           messageContents,
+		// 	"candidate_labels": "",
+		// })
+
+		// responseBody := bytes.NewBuffer(postBody)
+		// req, err := http.NewRequest("POST", CLIP_URL, responseBody)
+		// if err != nil {
+		// 	return err
+		// }
+
+		// req.Header.Set("Authorization", "Bearer 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")
+
+		// client := &http.Client{}
+		// resp, err := client.Do(req)
+
+		// if err != nil {
+		// 	return err
+		// }
+		// defer resp.Body.Close()
+
+		// body, err := io.ReadAll(resp.Body)
+		// if err != nil {
+		// 	return err
+		// }
+
+		fmt.Printf("embedding: \n %s\n", embedding)
 
 	case QUERY:
 		// do something else
@@ -122,6 +168,15 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	sess, err := session.NewSession(&aws.Config{
+		Region:      aws.String("us-east-1"),
+		Credentials: credentials.NewStaticCredentials("", "", ""),
+	})
+	if err != nil {
+		// Handle session creation error
+	}
+	sagemakerClient = sagemakerruntime.New(sess)
+
 	http.HandleFunc("/ws", handleWebSocket)
 	var uri = fmt.Sprintf("localhost:%d", PORT)
 
