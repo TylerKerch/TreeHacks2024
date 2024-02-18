@@ -12,7 +12,7 @@ class ScreenPainter {
         }
     }
     
-    func addOverlay(x: Int, y: Int, height: Int, width: Int, number: Int, caption: String) {
+    func addOverlay(x: Double, y: Double, height: Double, width: Double, number: Int, caption: String) {
 //      let screenRect = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 800, height: 600)
          let windowRect = NSRect(x: x, y: y, width: width, height: height)
         

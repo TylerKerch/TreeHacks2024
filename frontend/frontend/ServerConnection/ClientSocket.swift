@@ -5,7 +5,7 @@
 //  Created by Sarvesh Phoenix on 2/17/24.
 //
 
-import Foundation
+import AppKit
 import Starscream
 
 class ClientSocket: WebSocketDelegate {
@@ -51,7 +51,14 @@ class ClientSocket: WebSocketDelegate {
                     print(drawResponse.boundingBoxes[0].text)
                     var i = 1
                     for box in drawResponse.boundingBoxes {
-                        screenPainter.addOverlay(x: box.x, y: box.y, height: box.height, width: box.width, number: i, caption: box.text)
+                        let x = box.x / 2
+                        let y = box.y / 2
+                        let width = box.width / 2
+                        let height = box.height / 2
+                        let newX = x - width / 2
+                        let screenHeight = NSScreen.main?.frame.height ?? 1120
+                        let newY = screenHeight - y - 50 - height * 1.5
+                        screenPainter.addOverlay(x: newX, y: newY, height: height + 50, width: width, number: i, caption: box.text)
                         i += 1
                     }
                 case "SPEAK":

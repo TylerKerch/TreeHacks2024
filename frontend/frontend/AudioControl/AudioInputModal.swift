@@ -39,6 +39,7 @@ class GifWindowController: NSWindowController {
     private func positionWindowAtScreenBottom() {
         if let screen = NSScreen.main {
             let screenWidth = screen.frame.width
+            print(screen.frame.height, screen.frame.width)
             let windowHeight = window?.frame.height ?? 0
             let windowX = (screenWidth - (window?.frame.width ?? 0)) / 2
             let windowY = windowHeight * 0.15

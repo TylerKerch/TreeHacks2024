@@ -2,49 +2,16 @@ package main
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"image"
 	"io"
 	"net/http"
 
 	// "image/jpeg"
 	// "log"
-	"strings"
 	// "sync"
-
-	"github.com/disintegration/imaging"
 )
-
-// decodeBase64Image decodes a base64-encoded image string and returns an image.Image.
-func decodeBase64Image(encoded string) (image.Image, error) {
-	// Strip metadata if present
-	if idx := strings.Index(encoded, ","); idx != -1 {
-		encoded = encoded[idx+1:]
-	}
-
-	// Decode base64 string
-	decoded, err := base64.StdEncoding.DecodeString(encoded)
-	if err != nil {
-		return nil, err
-	}
-
-	// Decode image
-	img, _, err := image.Decode(bytes.NewReader(decoded))
-	if err != nil {
-		return nil, err
-	}
-
-	return img, nil
-}
-
-// cropImage takes an image and a bounding box, then returns the cropped image.
-func cropImage(img image.Image, rect image.Rectangle) (image.Image, error) {
-	croppedImg := imaging.Crop(img, rect)
-	return croppedImg, nil
-}
 
 type TagBoxesPayload struct {
 	ImageBase64 string       `json:"image_base64"`
