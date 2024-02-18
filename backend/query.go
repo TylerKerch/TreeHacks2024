@@ -41,6 +41,8 @@ func GetQueryNextStep(args QueryNextStepContext) QueryStep {
 		"Content-Type":  "application/json",
 	}
 
+	image_url := UploadBase64Image(current_screen_image)
+
 	data := map[string]interface{}{
 		"model": GPT4V_MODEL_ENGINE,
 		"messages": []map[string]interface{}{
@@ -49,7 +51,7 @@ func GetQueryNextStep(args QueryNextStepContext) QueryStep {
 				"role": "user",
 				"content": []map[string]string{
 					{"type": "text", "text": prompt},
-					{"type": "image_url", "image_url": "data:image/jpeg;base64," + current_screen_image},
+					{"type": "image_url", "image_url": image_url},
 				},
 			},
 		},

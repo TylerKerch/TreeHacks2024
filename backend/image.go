@@ -5,12 +5,57 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"log"
 	"net/http"
 	"os"
 	"treehacks/backend/constants"
 )
+
+func UploadBase64Image(image string) string {
+
+	data := map[string]interface{}{
+		"imageBase64": image,
+		"filename":    "img_" + uuid.New().String() + ".jpg",
+	}
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println("Error encoding JSON:", err)
+		return ""
+	}
+
+	var headers = map[string]string{
+		"Content-Type":  "application/json",
+	}
+	req, err := http.NewRequest("POST", "https://real-bug-pet.ngrok-free.app/upload", bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return ""
+	}
+	for key, value := range headers {
+		req.Header.Add(key, value)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error making request:", err)
+		return ""
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	log.Println(body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return ""
+	}
+
+	return string(body)
+
+}
 
 // ConvertImageToBase64 takes the path of an image file and returns its base64 encoded string.
 func ConvertImageToBase64(imagePath string) (string, error) {
@@ -35,13 +80,15 @@ func ImageDescription(base64_image string) string {
 		"Content-Type":  "application/json",
 	}
 
+	image_url := UploadBase64Image(base64_image)
+
 	data := map[string]interface{}{
 		"model": GPT4V_MODEL_ENGINE,
 		"messages": []map[string]interface{}{
 			{"role": "system", "content": context},
 			{"role": "user", "content": []map[string]string{
 				{"type": "text", "text": prompt},
-				{"type": "image_url", "image_url": "data:image/jpeg;base64," + base64_image},
+				{"type": "image_url", "image_url": image_url},
 			}},
 		},
 		"max_tokens": maxTokens,
