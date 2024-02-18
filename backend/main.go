@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -8,15 +9,15 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
-
-	"github.com/gorilla/websocket"
-	"github.com/lpernett/godotenv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sagemakerruntime"
+	"github.com/gorilla/websocket"
+	"github.com/lpernett/godotenv"
 )
 
 var upgrader = websocket.Upgrader{
@@ -46,12 +47,25 @@ const (
 	// Image Description
 	GPT4V_MODEL_ENGINE = "gpt-4-vision-preview"
 	GPT4V_OPENAI_URL   = "https://api.openai.com/v1/chat/completions"
+
+	// Starting context window
+	FRESH_CONTEXT_WINDOW = "You are a tool that aides the elderly in navigating their computers by helping them fulfill a goal (like 'watching a video about cats') by suggesting a next step. Your goal is to only output the next step towards reaching the final screen. Currently, your goal is to assist the user with this query that they've provided: GLOBAL_QUERY. If you have reached the final screen (that is, there isn't an action the user needs to take), say 'LAST STEP'. Below is the context of the task including steps that have been taken. CONTEXT: "
 )
 
 var sess *session.Session
-var sagemakerClient *sagemakerruntime.SageMakerRuntime
-var previousEmbedding []float64 = nil
+var sagemaker_client *sagemakerruntime.SageMakerRuntime
+var previous_embedding []float64 = nil
 var conn *websocket.Conn
+var current_screen_image string
+
+var current_global_query string        // reset me on new query
+var step_channel chan (bool) = nil     // reset me on new query
+var current_step_count = 0             // reset me on new query
+var current_context_window string = "" // reset me on new query
+
+func UpdateContextWindow(global_query string) {
+	current_context_window = strings.Replace(FRESH_CONTEXT_WINDOW, "GLOBAL_QUERY", global_query, 1)
+}
 
 func writeBack(messageType string, payload string) {
 	err := conn.WriteJSON(MessageContents{
@@ -118,6 +132,7 @@ func processMessage() error {
 	
 		return nil
 	case SCREENSHOT:
+		current_screen_image = incomingMessage.Payload
 		decodedBytes, err := base64.StdEncoding.DecodeString(incomingMessage.Payload)
 		if err != nil {
 			return err
@@ -129,38 +144,67 @@ func processMessage() error {
 		}
 
 		next_action := VOICE_OVER
-		if previousEmbedding != nil {
-			next_action = CompareVectors(previousEmbedding, embedding)
+		if previous_embedding != nil {
+			next_action = CompareVectors(previous_embedding, embedding)
 		}
 
-		previousEmbedding = embedding
-
-		log.Println(next_action)
+		previous_embedding = embedding
 
 		switch next_action {
 		case NOTHING:
 			go writeBack(NOTHING, "")
 			return nil
 		case REINDEX:
-			_, err := ReindexImage(incomingMessage.Payload)
-			if err != nil {
-				log.Println(err)
-			}
-
-			// go writeBack(REINDEX, string(jsonData))
+			// go ReindexImage(incomingMessage.Payload)
 			return nil
 		case VOICE_OVER:
-			_, err := ReindexImage(incomingMessage.Payload)
-			if err != nil {
-				log.Println(err)
-			}
-			// go writeBack(REINDEX, string(jsonData))
+			// go ReindexImage(incomingMessage.Payload)
+
 			voiceMessage := ImageDescription(incomingMessage.Payload)
 			go writeBack(VOICE_OVER, voiceMessage)
 			return nil
 		}
 	case QUERY:
+		if step_channel != nil {
+			step_channel <- true
+		}
 
+		current_global_query = incomingMessage.Payload
+		step_channel = make(chan bool)
+		current_step_count = 0
+		UpdateContextWindow(current_global_query)
+
+		go func() {
+			for {
+				select {
+				case <-step_channel:
+					return
+				default:
+					// Event loop
+					nextStep := GetQueryNextStep(QueryNextStepContext{
+						CurrentStep:          current_step_count,
+						CurrentScreenImage:   current_screen_image,
+						CurrentContextWindow: current_context_window,
+						GlobalQuery:          current_global_query,
+					})
+
+					text := nextStep.Text
+
+					// We're done.
+					if text == "LAST STEP" {
+						step_channel <- true
+						continue
+					}
+					// closest_box := getClosestBox(text)
+					// writeBack(DRAW_BOXES, closest_box)
+
+					writeBack(VOICE_OVER, nextStep.Audio)
+					current_context_window += "\n" + nextStep.Text
+					log.Println(current_context_window)
+					current_step_count++
+				}
+			}
+		}()
 	}
 
 	return err
@@ -186,6 +230,7 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	ctx, _ := context.WithCancel(context.Background())
 	err := godotenv.Load()
 	if err != nil {
 		panic("Environment variable(s) couldn't be loaded")
@@ -208,11 +253,15 @@ func main() {
 		panic("Error creating AWS config")
 	}
 
-	sagemakerClient = sagemakerruntime.New(sess)
+	sagemaker_client = sagemakerruntime.New(sess)
 
+	ocrSetUp(ctx)
 	http.HandleFunc("/ws", handleWebSocket)
 	var uri = fmt.Sprintf("localhost:%d", PORT)
 
 	fmt.Println("Running WebSocket server on " + uri)
 	http.ListenAndServe(uri, nil)
+
+	ocrClosePool()
+
 }

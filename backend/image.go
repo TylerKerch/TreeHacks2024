@@ -154,3 +154,4 @@ func ReindexImage(payload string) ([]Prediction, error) {
 
 	// return string(jsonData), nil	
 }
+
