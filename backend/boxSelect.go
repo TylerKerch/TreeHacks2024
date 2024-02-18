@@ -57,7 +57,7 @@ func cropImageBase64(imageBase64 string, x, y, width, height float64) string {
 	}
 
 	// Crop the image
-	rect := image.Rect(int(x-width/2), int(y-width/2), int(x+width/2), int(y+height/2))
+	rect := image.Rect(int(x-width/2), int(y-height/2), int(x+width/2), int(y+height/2))
 	croppedImg := image.NewRGBA(rect)
 	draw.Draw(croppedImg, rect, img, image.Pt(int(x), int(y)), draw.Src)
 
