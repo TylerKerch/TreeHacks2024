@@ -116,8 +116,6 @@ func processMessage() error {
 		elapsedTime := time.Since(startTime)
 		fmt.Printf("The function took %s to execute.\n", elapsedTime)
 
-		log.Println("Request finished")
-
 		embedding, err := ConvertBodyToVector(result.Body)
 		if err != nil {
 			return errors.New("failed to convert body to vector from (CLIP) model")
@@ -136,19 +134,11 @@ func processMessage() error {
 			go writeBack(NOTHING, "")
 			return nil
 		case REINDEX:
-			jsonData, err := ReindexImage(incomingMessage.Payload)
-			if err != nil {
-				log.Println(err)
-			}
-
-			go writeBack(REINDEX, string(jsonData))
+			// go ReindexImage(incomingMessage.Payload)
 			return nil
 		case VOICE_OVER:
-			jsonData, err := ReindexImage(incomingMessage.Payload)
-			if err != nil {
-				log.Println(err)
-			}
-			go writeBack(REINDEX, string(jsonData))
+			// go ReindexImage(incomingMessage.Payload)
+
 			voiceMessage := ImageDescription(incomingMessage.Payload)
 			go writeBack(VOICE_OVER, voiceMessage)
 			return nil
@@ -191,7 +181,6 @@ func processMessage() error {
 
 	return err
 }
-
 
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	connection, err := upgrader.Upgrade(w, r, nil) // Upgrade the connection to a WebSocket.
@@ -247,5 +236,4 @@ func main() {
 
 	ocrClosePool()
 
-	
 }
