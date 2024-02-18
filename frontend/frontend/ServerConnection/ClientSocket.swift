@@ -34,9 +34,7 @@ class ClientSocket: WebSocketDelegate {
             print("websocket is connected: \(headers)")
         case .disconnected(let reason, let code):
             print("websocket is disconnected: \(reason) with code: \(code)")
-        case .text(let string):
-        
-//            print("Received text: \(string)")
+        case .text(let string):       
             guard let data = string.data(using: .utf8) else { return }
             do {
                 let genericResponse = try JSONDecoder().decode(SocketModels.GenericResponse.self, from: data)
@@ -49,15 +47,15 @@ class ClientSocket: WebSocketDelegate {
                 case "SELECT":
                     print(data)
                     let drawResponse = try JSONDecoder().decode(SocketModels.SelectBoxResponse.self, from: data)
-//                    print(drawResponse.boundingBox.text)
-                    var i = 1
                     let box = drawResponse.payload
                     let x = box.x / 2
                     let y = box.y / 2
                     let width = box.width / 2
                     let height = box.height / 2
-                    screenPainter.addOverlay(x: x-width/2, y: y-height/2, height: height, width: width, number: i, caption: box.text)
-                    i += 1
+                    let newX = x - width / 2
+                    let screenHeight = NSScreen.main?.frame.height ?? 1120
+                    let newY = screenHeight - y - height * 0.5
+                    screenPainter.addOverlay(x: newX, y: newY, height: height, width: width, number: 0, caption: box.text)
                 case "BOXES":
                     if let jsonStr = String(data: data, encoding: .utf8) {
                         print("Fetched JSON String: \(jsonStr)")
@@ -73,12 +71,12 @@ class ClientSocket: WebSocketDelegate {
                         let height = box.height / 2
                         let newX = x - width / 2
                         let screenHeight = NSScreen.main?.frame.height ?? 1120
-                        let newY = screenHeight - y - 50 - height * 1.5
-                        let detection_id = box.detection_id
-                        screenPainter.addOverlay(x: newX, y: newY, height: height + 50, width: width, number: i, caption: "")
+                        let newY = screenHeight - y - height * 0.5
+                        screenPainter.addOverlay(x: newX, y: newY, height: height, width: width, number: 0, caption: "")
+                        
                         i += 1
                     }
-                    
+                
                 case "SPEAK":
                     let speakResponse = try JSONDecoder().decode(SocketModels.TextSpeechResponse.self, from: data)
                     print(speakResponse.payload)

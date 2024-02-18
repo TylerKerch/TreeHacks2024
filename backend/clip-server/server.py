@@ -67,17 +67,12 @@ def process_image():
     print(text_query)
     print(predictions)
     try:
-        print('reached')
         # Decode the Base64 encoded image
         image_data = base64.b64decode(image_base64)
-        print('reached')
         image = Image.open(io.BytesIO(image_data))
-        print('reached')
         # Process the text query
         text_input = processor(text=text_query, return_tensors="pt", padding=True)
-        print('reached')
         text_features = model.get_text_features(**text_input)
-        print('reached')
         batch_size = 32
         sub_image_batches = []
         batch_predictions = []
@@ -98,15 +93,14 @@ def process_image():
                 similarities = torch.nn.functional.cosine_similarity(image_features, text_features)
 
                 for prediction, similarity in zip(batch_predictions, similarities):
-                    print(similarity)
                     prediction['similarity'] = similarity.item()
 
                 sub_image_batches = []
                 batch_predictions = []
 
         sorted_predictions = sorted(predictions, key=lambda x: x['similarity'], reverse=True)
-        print(sorted_predictions)
 
+        print(sorted_predictions)
         return jsonify({'predictions': sorted_predictions})
 
     except Exception as e:

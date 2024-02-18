@@ -64,7 +64,6 @@ func tagImageBoxes(b64image string, textQuery string) ([]CLIPPrediction, error) 
 	}
 
 	var tags TagBoxesResponse
-	fmt.Println(string(body))
 	err = json.Unmarshal(body, &tags)
 	if err != nil {
 		fmt.Println("Error: ", err)

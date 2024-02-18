@@ -74,11 +74,12 @@ func cropImageBase64(imageBase64 string, x, y, width, height float64) string {
 }
 
 func getClosestBox(imageBase64 string, textQuery string) SelectedCropped {
+	print("TEXT QUERY", textQuery)
 	predictions, _ := tagImageBoxes(imageBase64, textQuery)
-	fmt.Println(predictions)
 	selection := predictions[0]
 	selectedCropped := cropImageBase64(imageBase64, selection.X, selection.Y, selection.Width, selection.Height)
 	textCaption := SubImageDescription(imageBase64, selectedCropped)
+	print("SELECTION")
 	fmt.Println(selection)
 	fmt.Println(textCaption)
 	return convertToSelectedCropped(selection, textCaption)
