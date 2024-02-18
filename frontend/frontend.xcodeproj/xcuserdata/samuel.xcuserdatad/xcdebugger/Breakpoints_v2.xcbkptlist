@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Bucket
+   uuid = "59D66CC7-A5DC-49C3-A85D-215BBC6B1058"
+   type = "1"
+   version = "2.0">
+   <Breakpoints>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "B8FD3B17-7699-4F0A-81D0-7ABAA895AC12"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "frontend/ServerConnection/ClientSocket.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "50"
+            endingLineNumber = "50"
+            landmarkName = "didReceive(event:client:)"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "B8FD3B17-7699-4F0A-81D0-7ABAA895AC12 - c7b5000ac64a28e6"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "frontend.ClientSocket.didReceive(event: Starscream.WebSocketEvent, client: Starscream.WebSocketClient) -&gt; ()"
+                  moduleName = "frontend"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/samuel/college/junior/treehacks/TreeHacks2024/frontend/frontend/ServerConnection/ClientSocket.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "50"
+                  endingLineNumber = "50"
+                  offsetFromSymbolStart = "3527">
+               </Location>
+               <Location
+                  uuid = "B8FD3B17-7699-4F0A-81D0-7ABAA895AC12 - c7b5000ac64a28e6"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "frontend.ClientSocket.didReceive(event: Starscream.WebSocketEvent, client: Starscream.WebSocketClient) -&gt; ()"
+                  moduleName = "frontend"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/samuel/college/junior/treehacks/TreeHacks2024/frontend/frontend/ServerConnection/ClientSocket.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "50"
+                  endingLineNumber = "50"
+                  offsetFromSymbolStart = "3398">
+               </Location>
+               <Location
+                  uuid = "B8FD3B17-7699-4F0A-81D0-7ABAA895AC12 - c7b5000ac64a28e6"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "frontend.ClientSocket.didReceive(event: Starscream.WebSocketEvent, client: Starscream.WebSocketClient) -&gt; ()"
+                  moduleName = "frontend"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/samuel/college/junior/treehacks/TreeHacks2024/frontend/frontend/ServerConnection/ClientSocket.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "50"
+                  endingLineNumber = "50"
+                  offsetFromSymbolStart = "8554">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+   </Breakpoints>
+</Bucket>

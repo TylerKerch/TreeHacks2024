@@ -7,7 +7,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var menuBarController: MenuBarController!
     var voiceRecorder: VoiceRecorder!
     var screenReader: ScreenReader!
-    var screenPainter: ScreenPainter!
+//    var screenPainter: ScreenPainter!
     var textSpeaker: TextSpeaker!
     
     var hotKeyScreenReader: HotKey?
@@ -23,10 +23,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         menuBarController = MenuBarController()
         voiceRecorder = VoiceRecorder()
         screenReader = ScreenReader()
-        screenPainter = ScreenPainter()
         textSpeaker = TextSpeaker()
         
-        socket = ClientSocket(painter: screenPainter, speaker: textSpeaker)
+        socket = ClientSocket(painter: ScreenPainter.shared, speaker: textSpeaker)
         
         if let mainWindow = NSApplication.shared.windows.first {
             mainWindow.close()

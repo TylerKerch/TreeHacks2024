@@ -11,14 +11,14 @@ class MenuBarController {
         }
         
         let menu = NSMenu()
-        let moveCursorItem = NSMenuItem(title: "Move Cursor", action: #selector(moveCursor), keyEquivalent: "m")
-        moveCursorItem.target = self
-        menu.addItem(moveCursorItem)
-        
-        let readScreenItem = NSMenuItem(title: "Read Screen", action: #selector(readScreen), keyEquivalent: "k")
-        readScreenItem.keyEquivalentModifierMask = [.command, .shift]
-        readScreenItem.target = self
-        menu.addItem(readScreenItem)
+//        let moveCursorItem = NSMenuItem(title: "Move Cursor", action: #selector(moveCursor), keyEquivalent: "m")
+//        moveCursorItem.target = self
+//        menu.addItem(moveCursorItem)
+//        
+//        let readScreenItem = NSMenuItem(title: "Read Screen", action: #selector(readScreen), keyEquivalent: "k")
+//        readScreenItem.keyEquivalentModifierMask = [.command, .shift]
+//        readScreenItem.target = self
+//        menu.addItem(readScreenItem)
         
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
@@ -26,11 +26,11 @@ class MenuBarController {
         statusItem.menu = menu
     }
     
-    @objc private func readScreen() {
+//    @objc private func readScreen() {
 //        ScreenReader().readScreenContents()
-    }
-    
-    @objc private func moveCursor() {
-        CursorController.moveCursorToCenter()
-    }
+//    }
+//    
+//    @objc private func moveCursor() {
+//        CursorController.moveCursorToCenter()
+//    }
 }

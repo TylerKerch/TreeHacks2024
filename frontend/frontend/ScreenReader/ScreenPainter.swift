@@ -1,10 +1,13 @@
 import Cocoa
 
+import Cocoa
+
 class ScreenPainter {
     
-    var highlightWindows: [OverlayWindow] = []
+    static let shared = ScreenPainter() // Singleton instance
+    private var overlayWindow: OverlayWindow?
     
-    init() {
+    private init() {
         let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]
         let accessEnabled = AXIsProcessTrustedWithOptions(options)
         if !accessEnabled {
@@ -13,26 +16,30 @@ class ScreenPainter {
     }
     
     func addOverlay(x: Double, y: Double, height: Double, width: Double, number: Int, caption: String) {
-//      let screenRect = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 800, height: 600)
         let windowRect = NSRect(x: x, y: y, width: width, height: height)
+        self.overlayWindow = OverlayWindow(contentRect: windowRect, styleMask: .borderless, backing: .buffered, defer: false)
+        self.overlayWindow?.orderFrontRegardless()
         
-        // Initialize the overlay window and the drawing view
-        let overlayWindow = OverlayWindow(contentRect: windowRect, styleMask: .borderless, backing: .buffered, defer: false)
-//        let highlightView = HighlightView(frame: windowRect, caption: caption)
-        
-        // Set the custom view as the window's content view
-//        overlayWindow.contentView = highlightView
-        
-        // Make the overlay window visible
-        overlayWindow.orderFront(nil)
-        highlightWindows.append(overlayWindow)
+//        DispatchQueue.main.async {
+//            if let existingWindow = self.overlayWindow {
+//                existingWindow.setContentSize(NSSize(width: width, height: height))
+//                existingWindow.setFrameOrigin(NSPoint(x: x, y: y))
+//                // Update content or caption if needed
+//            } else {
+//                let windowRect = NSRect(x: x, y: y, width: width, height: height)
+//                self.overlayWindow = OverlayWindow(contentRect: windowRect, styleMask: .borderless, backing: .buffered, defer: false)
+//                self.overlayWindow?.orderFrontRegardless()
+//                self.overlayWindow?.close()
+//            }
+//        }
     }
     
-    @objc func clearHighlights() {
-        for window in highlightWindows {
-            window.close()
-        }
-        highlightWindows.removeAll()
+    func clearHighlights() {
+        self.overlayWindow?.orderOut(nil)
+        // self.overlayWindow = nil // Release the window to avoid memory leaks
+//        DispatchQueue.main.async { // Ensure UI updates are on the main thread
+//            
+//        }
     }
 }
 
@@ -41,10 +48,11 @@ class OverlayWindow: NSWindow {
         super.init(contentRect: contentRect, styleMask: .borderless, backing: backingStoreType, defer: flag)
         self.backgroundColor = NSColor.yellow.withAlphaComponent(0.3)
         self.isOpaque = false
-        self.level = .mainMenu
+        self.level = .floating // You might want to use .popUpMenu or .statusBar for overlays
         self.ignoresMouseEvents = true
     }
 }
+
 
 class HighlightView: NSView {
     var caption: String

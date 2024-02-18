@@ -45,9 +45,9 @@ class ClientSocket: WebSocketDelegate {
                 case "CLEAR":
                     // RECEIVED A JSON MESSAGE TO CLEAR BOXES
                     print("CLEAR BOXES")
-                    screenPainter.clearHighlights()
+                    ScreenPainter.shared.clearHighlights()
                 case "DRAW":
-//                    screenPainter.clearHighlights()
+                    ScreenPainter.shared.clearHighlights()
                     print(data)
                     let drawResponse = try JSONDecoder().decode(SocketModels.DrawBoxesResponse.self, from: data)
 //                    print(drawResponse.boundingBox.text)
@@ -59,7 +59,7 @@ class ClientSocket: WebSocketDelegate {
                     let newX = x - width / 2
                     let screenHeight = NSScreen.main?.frame.height ?? 1120
                     let newY = screenHeight - y - height * 0.5
-                    screenPainter.addOverlay(x: newX, y: newY, height: height, width: width, number: 0, caption: box.text)
+                    ScreenPainter.shared.addOverlay(x: newX, y: newY, height: height, width: width, number: 0, caption: box.text)
                 case "SPEAK":
                     let speakResponse = try JSONDecoder().decode(SocketModels.TextSpeechResponse.self, from: data)
                     print(speakResponse.payload)
