@@ -167,12 +167,19 @@ func processMessage() error {
 						GlobalQuery:          current_global_query,
 					})
 
-					// text := nextStep.Text
+					text := nextStep.Text
+
+					// We're done.
+					if text == "LAST STEP" {
+						step_channel <- true
+						continue
+					}
 					// closest_box := getClosestBox(text)
 					// writeBack(DRAW_BOXES, closest_box)
 
 					writeBack(VOICE_OVER, nextStep.Audio)
 					current_context_window += "\n" + nextStep.Text
+					log.Println(current_context_window)
 					current_step_count++
 				}
 			}
