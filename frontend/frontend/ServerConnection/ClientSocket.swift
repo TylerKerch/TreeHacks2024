@@ -17,10 +17,11 @@ class ClientSocket: WebSocketDelegate {
     init(painter: ScreenPainter, speaker: TextSpeaker) {
         screenPainter = painter
         textSpeaker = speaker
+        setupSocket()
     }
     
-    init() {
-        var request = URLRequest(url: URL(string: "ws://localhost:8080")!)
+    func setupSocket() {
+        var request = URLRequest(url: URL(string: "ws://localhost:8080/ws")!)
         request.timeoutInterval = 5
         socket = WebSocket(request: request)
         socket.delegate = self
