@@ -52,7 +52,6 @@ const (
 	FRESH_CONTEXT_WINDOW = "You are a tool that aides the elderly in navigating their computers by helping them fulfill a goal (like 'watching a video about cats') by suggesting a next step. Your goal is to only output the next step towards reaching the final screen. Currently, your goal is to assist the user with this query that they've provided: GLOBAL_QUERY. If you have reached the final screen (that is, there isn't an action the user needs to take), say 'LAST STEP'. Below is the context of the task including steps that have been taken. CONTEXT: "
 )
 
-var sess *session.Session
 var sagemaker_client *sagemakerruntime.SageMakerRuntime
 var previous_embedding []float64 = nil
 var conn *websocket.Conn
@@ -176,6 +175,11 @@ func processMessage() error {
 					})
 
 					text := nextStep.Text
+					err := nextStep.Err
+
+					if err != nil {
+						log.Println(err)
+					}
 
 					// We're done.
 					if text == "LAST STEP" || current_step_count > 10 {
@@ -216,7 +220,9 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	ctx, _ := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	err := godotenv.Load()
 	if err != nil {
 		panic("Environment variable(s) couldn't be loaded")
@@ -253,5 +259,4 @@ func main() {
 	http.ListenAndServe(uri, nil)
 
 	ocrClosePool()
-
 }
