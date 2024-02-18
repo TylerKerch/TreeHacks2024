@@ -40,12 +40,15 @@ class ClientSocket: WebSocketDelegate {
             guard let data = string.data(using: .utf8) else { return }
             do {
                 let genericResponse = try JSONDecoder().decode(SocketModels.GenericResponse.self, from: data)
+                print(genericResponse.type)
                 switch genericResponse.type {
                 case "CLEAR":
                     // RECEIVED A JSON MESSAGE TO CLEAR BOXES
+                    print("CLEAR BOXES")
                     screenPainter.clearHighlights()
                 case "DRAW":
                     let drawResponse = try JSONDecoder().decode(SocketModels.DrawBoxesResponse.self, from: data)
+                    print(drawResponse.boundingBoxes[0].text)
                     var i = 1
                     for box in drawResponse.boundingBoxes {
                         screenPainter.addOverlay(x: box.x, y: box.y, height: box.height, width: box.width, number: i, caption: box.text)
@@ -53,7 +56,8 @@ class ClientSocket: WebSocketDelegate {
                     }
                 case "SPEAK":
                     let speakResponse = try JSONDecoder().decode(SocketModels.TextSpeechResponse.self, from: data)
-                    textSpeaker.readText(s: speakResponse.message)
+                    print(speakResponse.payload)
+                    textSpeaker.readText(s: speakResponse.payload)
                 default:
                     print("Unknown type")
                 }
