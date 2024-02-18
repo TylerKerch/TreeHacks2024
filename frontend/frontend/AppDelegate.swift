@@ -47,7 +47,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         hotKeyVoiceRecorder?.keyUpHandler = {
             let query = self.voiceRecorder.stopRecording()
-            self.socket.sendQueryRequest(query: query)
+            self.socket.sendPacket(type: "QUERY", s: query)
             
             self.gifWindowController?.close()
             self.gifWindowController = nil
@@ -63,7 +63,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 print("Could not unwrap image")
                 return
             }
-            self?.socket.sendScreenshotRequest(image: unwrappedImage)
+            self?.socket.sendPacket(type: "IMAGE", s: unwrappedImage)
         }
     }
     
