@@ -26,9 +26,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         hotKeyScreenReader = HotKey(key: .k, modifiers: [.command, .shift])
         hotKeyScreenReader?.keyDownHandler = {
-            self.screenPainter.addOverlay(x: 50, y: 50, height: 200, width: 200, text: "1")
-            self.screenPainter.addOverlay(x: 450, y: 450, height: 200, width: 200, text: "2")
-            self.screenPainter.addOverlay(x: 850, y: 850, height: 200, width: 200, text: "3")
+            self.screenPainter.addOverlay(x: 50, y: 50, height: 200, width: 500, number: 1, caption: "Print Icon")
+            self.screenPainter.addOverlay(x: 450, y: 450, height: 200, width: 500, number: 2, caption: "Save Icon")
+            self.screenPainter.addOverlay(x: 850, y: 850, height: 200, width: 500, number: 3, caption: "Eat chicken rice")
         }
         
         hotKeyVoiceRecorder = HotKey(key: .grave, modifiers: [])
