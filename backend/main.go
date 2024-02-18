@@ -155,7 +155,6 @@ func processMessage() error {
 			go ReindexImage(incomingMessage.Payload)
 			voiceMessage := ImageDescription(incomingMessage.Payload)
 			go writeBack(VOICE_OVER, voiceMessage)
-
 			return nil
 		}
 	case QUERY:
@@ -193,7 +192,7 @@ func processMessage() error {
 					if text == "LAST STEP" || current_step_count > 10 {
 						log.Println("Query finished.")
 						step_channel <- true
-						return
+						continue
 					}
 					closestBox := getClosestBox(current_screen_image, text)
 					boxJSON, err := json.Marshal(closestBox)
