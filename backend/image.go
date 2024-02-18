@@ -27,7 +27,7 @@ func ConvertImageToBase64(imagePath string) (string, error) {
 }
 
 func ImageDescription(base64_image string) string {
-	context := constants.CONTEXT
+	context := constants.IMAGE_CONTEXT
 	prompt := "What's in this image?"
 	maxTokens := 2048
 	var headers = map[string]string{
@@ -155,6 +155,6 @@ func ReindexImage(payload string) ([]BoundingBox, error) {
 	}
 
 	boundingBoxes = data.BoundingBox
-	
+
 	return data.BoundingBox, nil
 }
