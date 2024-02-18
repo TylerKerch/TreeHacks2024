@@ -41,7 +41,7 @@ class ClientSocket: WebSocketDelegate {
                 let genericResponse = try JSONDecoder().decode(SocketModels.GenericResponse.self, from: data)
                 switch genericResponse.type {
                 case "CLEAR":
-                    let clearResponse = try JSONDecoder().decode(SocketModels.ClearBoxesResponse.self, from: data)
+                    // RECEIVED A JSON MESSAGE TO CLEAR BOXES
                     screenPainter.clearHighlights()
                 case "DRAW":
                     let drawResponse = try JSONDecoder().decode(SocketModels.DrawBoxesResponse.self, from: data)
@@ -71,23 +71,8 @@ class ClientSocket: WebSocketDelegate {
         }
     }
     
-    func sendScreenshotRequest(image: String) {
-        let request = SocketModels.ScreenshotRequest(type: "IMAGE", image: image)
-        do {
-            let requestData = try JSONEncoder().encode(request)
-            let requestString = String(data: requestData, encoding: .utf8)!
-            if(socket != nil) {
-                socket.write(string: requestString)
-            } else {
-                print("Socket hasn't been constructed properly")
-            }
-        } catch {
-            print("Error encoding QueryRequest: \(error)")
-        }
-    }
-    
-    func sendQueryRequest(query: String) {
-        let request = SocketModels.QueryRequest(type: "QUERY", query: query)
+    func sendPacket(type: String, s: String) {
+        let request = SocketModels.ClientPacket(type: type, payload: s)
         do {
             let requestData = try JSONEncoder().encode(request)
             let requestString = String(data: requestData, encoding: .utf8)!

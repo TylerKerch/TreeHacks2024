@@ -11,23 +11,13 @@ class SocketModels {
     
     // REQUESTS
     
-    struct ScreenshotRequest: Encodable {
+    struct ClientPacket: Encodable {
         let type: String
-        let image: String
+        let payload: String
 
         enum CodingKeys: String, CodingKey {
             case type = "type"
-            case image = "payload"
-        }
-    }
-    
-    struct QueryRequest: Encodable {
-        let type: String
-        let query: String
-        
-        enum CodingKeys: String, CodingKey {
-            case type = "type"
-            case query = "payload"
+            case payload = "payload"
         }
     }
     
