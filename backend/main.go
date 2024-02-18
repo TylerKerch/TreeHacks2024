@@ -79,7 +79,7 @@ func writeBack(messageType string, payload string) {
 
 func tagImage(imgBytes []byte) ([]float64, error) {
 	startTime := time.Now()
-	result, err := sagemakerClient.InvokeEndpoint(&sagemakerruntime.InvokeEndpointInput{
+	result, err := sagemaker_client.InvokeEndpoint(&sagemakerruntime.InvokeEndpointInput{
 		Body:         imgBytes,
 		EndpointName: aws.String("clip-image-model-2023-02-11-06-16-48-670"),
 		ContentType:  aws.String("application/x-image"),
