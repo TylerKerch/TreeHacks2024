@@ -2,24 +2,25 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
-	"time"
 	"log"
 	"net/http"
 	"os"
+	"time"
 	"treehacks/backend/constants"
-
-	"github.com/gorilla/websocket"
-	"github.com/lpernett/godotenv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sagemakerruntime"
+	"github.com/danlock/gogosseract"
+	"github.com/gorilla/websocket"
+	"github.com/lpernett/godotenv"
 )
 
 var upgrader = websocket.Upgrader{
@@ -48,7 +49,7 @@ const (
 
 	//Image Description
 	GPT4V_MODEL_ENGINE = "gpt-4-vision-preview"
-	GPT4V_OPENAI_URL = "https://api.openai.com/v1/chat/completions"
+	GPT4V_OPENAI_URL   = "https://api.openai.com/v1/chat/completions"
 )
 
 var sess *session.Session
@@ -148,6 +149,7 @@ func processMessage(conn *websocket.Conn) error {
 
 	return err
 }
+
 // ConvertImageToBase64 takes the path of an image file and returns its base64 encoded string.
 func ConvertImageToBase64(imagePath string) (string, error) {
 	// Read the file into a byte slice
@@ -162,7 +164,7 @@ func ConvertImageToBase64(imagePath string) (string, error) {
 	return base64Image, nil
 }
 
-func imageDescription(base64_image string) string {
+func imageDescription(base64String string) string {
 	context := constants.CONTEXT
 	prompt := "What's in this image?"
 	maxTokens := 2048
@@ -177,7 +179,7 @@ func imageDescription(base64_image string) string {
 			{"role": "system", "content": context},
 			{"role": "user", "content": []map[string]string{
 				{"type": "text", "text": prompt},
-				{"type": "image_url", "image_url": "data:image/jpeg;base64,"+base64_image},
+				{"type": "image_url", "image_url": "data:image/jpeg;base64," + base64String},
 			}},
 		},
 		"max_tokens": maxTokens,
@@ -219,17 +221,39 @@ func imageDescription(base64_image string) string {
 			} `json:"message"`
 		} `json:"choices"`
 	}
-    var apiResponse ApiResponse
-    if err := json.Unmarshal(body, &apiResponse); err != nil {
-        fmt.Println("Error unmarshaling response body:", err)
-        return ""
-    }
+	var apiResponse ApiResponse
+	if err := json.Unmarshal(body, &apiResponse); err != nil {
+		fmt.Println("Error unmarshaling response body:", err)
+		return ""
+	}
 
 	content := apiResponse.Choices[0].Message.Content
 	fmt.Println("Content:", content)
 	return content
 }
 
+func textRecognition(base64String string, ctx context.Context) string {
+	trainingDataFile, _ := os.Open("eng.traineddata")
+
+	cfg := gogosseract.Config{
+		Language:     "eng",
+		TrainingData: trainingDataFile,
+	}
+
+	data, _ := base64.StdEncoding.DecodeString(base64String)
+    reader := bytes.NewReader(data)
+	// Create 10 Tesseract instances that can process image requests concurrently.
+	pool, _ := gogosseract.NewPool(ctx, 10, gogosseract.PoolConfig{Config: cfg})
+	// ParseImage loads the image and waits until the Tesseract worker sends back your result.
+	hocr, _ := pool.ParseImage(ctx, reader, gogosseract.ParseImageOptions{
+		IsHOCR: true,
+	})
+
+	fmt.Println(hocr)
+
+	// Always remember to Close the pool to release resources
+	pool.Close()
+}
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil) // Upgrade the connection to a WebSocket.
 	if err != nil {
@@ -248,11 +272,15 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	ctx, _ := context.WithCancel(context.Background())
 	err := godotenv.Load()
 	if err != nil {
 		panic("Environment variable(s) couldn't be loaded")
 	}
-	
+	imagePath := "image.png" // Replace with the path to your image
+	base64String, err := ConvertImageToBase64(imagePath)
+	textRecognition(base64String, ctx)
+
 	var access_token = os.Getenv("ACCESS_TOKEN")
 	var secret_access_token = os.Getenv("SECRET_ACCESS_TOKEN")
 
