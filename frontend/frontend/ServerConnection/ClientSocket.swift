@@ -12,9 +12,11 @@ class ClientSocket: WebSocketDelegate {
     
     var socket: WebSocket!
     var screenPainter: ScreenPainter!
+    var textSpeaker: TextSpeaker!
     
-    init(painter: ScreenPainter) {
+    init(painter: ScreenPainter, speaker: TextSpeaker) {
         screenPainter = painter
+        textSpeaker = speaker
     }
     
     struct UIBoxesRequest: Encodable {
@@ -65,8 +67,15 @@ class ClientSocket: WebSocketDelegate {
             if let data = string.data(using: .utf8) {
                 do {
                     let response = try JSONDecoder().decode(UIBoxesResponse.self, from: data)
+                    var i = 1
                     for box in response.boundingBoxes {
-                        screenPainter.addOverlay(x: box.x, y: box.y, height: box.height, width: box.width, text: box.text)
+                        screenPainter.addOverlay(x: box.x, y: box.y, height: box.height, width: box.width, number: i, caption: box.text)
+                        i += 1
+                    }
+                    
+                    textSpeaker.readText(s: "You have \(response.boundingBoxes.count) options.")
+                    for box in response.boundingBoxes {
+                        textSpeaker.readText(s: box.text)
                     }
                 } catch {
                     print("Error parsing UIBoxesResponse: \(error)")

@@ -12,8 +12,8 @@ class ScreenPainter {
         }
     }
     
-    func addOverlay(x: Int, y: Int, height: Int, width: Int, text: String) {
-//        let screenRect = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 800, height: 600)
+    func addOverlay(x: Int, y: Int, height: Int, width: Int, number: Int, caption: String) {
+//      let screenRect = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 800, height: 600)
         let windowRect = NSRect(x: x, y: y, width: width, height: height)
         
         // Initialize the overlay window and the drawing view
@@ -22,7 +22,8 @@ class ScreenPainter {
         
         // Set the custom view as the window's content view
         overlayWindow.contentView = drawingView
-        drawingView.customText = text
+        drawingView.circleText = String(number)
+        drawingView.captionText = caption
         
         // Make the overlay window visible
         overlayWindow.orderFront(nil)
@@ -48,13 +49,14 @@ class OverlayWindow: NSWindow {
 }
 
 class DrawingView: NSView {
-    var customText: String = "1"
+    var circleText: String = "1"
+    var captionText: String = "Component"
 
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
 
         // Draw a circle
-        let path = NSBezierPath(ovalIn: NSRect(x: 10, y: 10, width: 60, height: 60))
+        let path = NSBezierPath(ovalIn: NSRect(x: 10, y: bounds.height - 70, width: 60, height: 60))
         NSColor.systemRed.setFill()
         path.fill()
 
@@ -63,9 +65,26 @@ class DrawingView: NSView {
             .font: NSFont.systemFont(ofSize: 24),
             .foregroundColor: NSColor.white
         ]
-        let string = NSAttributedString(string: customText, attributes: attributes)
+        let string = NSAttributedString(string: circleText, attributes: attributes)
         let stringSize = string.size()
-        let stringRect = NSRect(x: 40 - stringSize.width / 2, y: 40 - stringSize.height / 2, width: stringSize.width, height: stringSize.height)
+        let stringRect = NSRect(x: 40 - stringSize.width / 2, y: -40 - stringSize.height / 2 + CGFloat(bounds.height), width: stringSize.width, height: stringSize.height)
         string.draw(in: stringRect)
+        
+        
+        let rectHeight: CGFloat = 50
+        let rectY = 0
+        let rectangle = NSRect(x: 0, y: 0, width: bounds.width, height: rectHeight)
+        NSColor.white.withAlphaComponent(0.9).setFill()
+        __NSRectFillUsingOperation(rectangle, .sourceOver)
+        
+        let captionAttributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont(name: "San Francisco", size: 18) ?? NSFont.systemFont(ofSize: 18),
+            .foregroundColor: NSColor.black
+        ]
+        let captionString = NSAttributedString(string: captionText, attributes: captionAttributes)
+        captionString.draw(at: CGPoint(x: 10, y: rectHeight - 20 - stringSize.height / 2))
+    
+        
+        let captionSize = captionString.size()
     }
 }

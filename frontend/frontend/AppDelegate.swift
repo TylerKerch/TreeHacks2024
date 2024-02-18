@@ -8,10 +8,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var voiceRecorder: VoiceRecorder!
     var screenReader: ScreenReader!
     var screenPainter: ScreenPainter!
-    var textReader: TextSpeaker!
+    var textSpeaker: TextSpeaker!
     
     var hotKeyScreenReader: HotKey?
     var hotKeyVoiceRecorder: HotKey?
+    var hotKeyTextReader: HotKey?
+    
+    var gifWindowController: GifWindowController?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Initialize the menu bar controller when the app finishes launching
@@ -19,30 +22,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         voiceRecorder = VoiceRecorder()
         screenReader = ScreenReader()
         screenPainter = ScreenPainter()
-        textReader = TextSpeaker()
+        textSpeaker = TextSpeaker()
         
-        var socket = ClientSocket(painter: <#T##ScreenPainter#>)
+        var socket = ClientSocket(painter: screenPainter, speaker: textSpeaker)
         
         if let mainWindow = NSApplication.shared.windows.first {
             mainWindow.close()
         }
         
-        hotKeyScreenReader = HotKey(key: .k, modifiers: [.command, .shift])
-        hotKeyScreenReader?.keyDownHandler = {
-            self.screenPainter.addOverlay(x: 50, y: 50, height: 200, width: 200, text: "1")
-            self.screenPainter.addOverlay(x: 450, y: 450, height: 200, width: 200, text: "2")
-            self.screenPainter.addOverlay(x: 850, y: 850, height: 200, width: 200, text: "3")
-        }
-        
         hotKeyVoiceRecorder = HotKey(key: .grave, modifiers: [])
         hotKeyVoiceRecorder?.keyDownHandler = {
             self.voiceRecorder.startRecording()
+            
+            if self.gifWindowController == nil {
+                self.gifWindowController = GifWindowController()
+            }
+            self.gifWindowController?.showWindow(nil)
         }
+        
         hotKeyVoiceRecorder?.keyUpHandler = {
             let query = self.voiceRecorder.stopRecording()
             let image = self.screenReader.readScreenContents()
             socket.sendUIBoxesRequest(imageBase64: image, query: query)
+            
+            self.gifWindowController?.close()
+            self.gifWindowController = nil
         }
+        
+        preloadGif()
     }
     
     func applicationWillTerminate(_ aNotification: Notification) {
