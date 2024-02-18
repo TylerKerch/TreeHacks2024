@@ -48,10 +48,10 @@ func textRecognition(ctx context.Context, base64String string) string {
 	hocr, _ := pool.ParseImage(ctx, reader, gogosseract.ParseImageOptions{
 		IsHOCR: true,
 	})
+	text, _ := hOCRToText(hocr)
+	fmt.Println(text)
 
-	fmt.Println(hOCRToText(hocr))
-
-	return hocr
+	return text
 }
 func ocrSetUp(ctx context.Context) {
 	trainingDataFile, _ := os.Open("eng.traineddata")
