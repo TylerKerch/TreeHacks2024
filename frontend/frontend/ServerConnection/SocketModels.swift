@@ -50,10 +50,10 @@ class SocketModels {
         
         struct BoundingBox: Decodable {
             let type: String
-            let x: Int
-            let y: Int
-            let width: Int
-            let height: Int
+            let x: Double
+            let y: Double
+            let width: Double
+            let height: Double
             let text: String
         }
     }
