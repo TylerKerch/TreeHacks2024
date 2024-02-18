@@ -115,7 +115,7 @@ type ResponseData struct {
 	Predictions []Prediction `json:"predictions"`
 }
 
-func ReindexImage(payload string) (string, error) {
+func ReindexImage(payload string) ([]Prediction, error) {
 	// Prepare the HTTP request
 	apiURL := "https://detect.roboflow.com/ui-screenshots/1?api_key=icHlGR6hm7WYll77q6bh"
 	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer([]byte(payload)))
@@ -129,26 +129,28 @@ func ReindexImage(payload string) (string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	// Read and print the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	var data ResponseData
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	jsonData, err := json.Marshal(data.Predictions)
-	if err != nil {
-		return "", err
-	}
+	return data.Predictions, nil
 
-	return string(jsonData), nil	
+	// jsonData, err := json.Marshal(data.Predictions)
+	// if err != nil {
+	// 	return "", err
+	// }
+
+	// return string(jsonData), nil	
 }

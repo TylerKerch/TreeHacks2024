@@ -63,6 +63,30 @@ func writeBack(messageType string, payload string) {
 	}
 }
 
+func tagImage(imgBytes []byte) ([]float64, error) {
+	startTime := time.Now()
+	result, err := sagemakerClient.InvokeEndpoint(&sagemakerruntime.InvokeEndpointInput{
+		Body:         imgBytes,
+		EndpointName: aws.String("clip-image-model-2023-02-11-06-16-48-670"),
+		ContentType:  aws.String("application/x-image"),
+	})
+	if err != nil {
+		return nil, errors.New("failed to call Sagemaker (CLIP) endpoint")
+	}
+
+	elapsedTime := time.Since(startTime)
+	fmt.Printf("The function took %s to execute.\n", elapsedTime)
+
+	log.Println("Request finished")
+
+	embedding, err := ConvertBodyToVector(result.Body)
+	if err != nil {
+		return nil, errors.New("failed to convert body to vector from (CLIP) model")
+	}
+	embedding = Normalize(embedding)
+	return embedding, nil
+}
+
 func processMessage() error {
 	wsMessageType, message, err := conn.ReadMessage() // Read a message from the WebSocket.
 	if err != nil {
@@ -81,33 +105,28 @@ func processMessage() error {
 	}
 
 	switch incomingMessage.Type {
+	case REINDEX:
+		startTime := time.Now()
+		predictions, err := ReindexImage(incomingMessage.Payload)
+		if err != nil {
+			log.Println(err)
+		}
+
+		tagImageBoxes(incomingMessage.Payload, predictions)
+		elapsedTime := time.Since(startTime)
+		fmt.Printf("The function took %s to execute.\n", elapsedTime)
+	
+		return nil
 	case SCREENSHOT:
 		decodedBytes, err := base64.StdEncoding.DecodeString(incomingMessage.Payload)
 		if err != nil {
 			return err
 		}
 
-		startTime := time.Now()
-
-		result, err := sagemakerClient.InvokeEndpoint(&sagemakerruntime.InvokeEndpointInput{
-			Body:         decodedBytes,
-			EndpointName: aws.String("clip-image-model-2023-02-11-06-16-48-670"),
-			ContentType:  aws.String("application/x-image"),
-		})
+		embedding, err := tagImage(decodedBytes)
 		if err != nil {
-			return errors.New("failed to call Sagemaker (CLIP) endpoint")
+			return errors.New(err.Error())
 		}
-
-		elapsedTime := time.Since(startTime)
-		fmt.Printf("The function took %s to execute.\n", elapsedTime)
-
-		log.Println("Request finished")
-
-		embedding, err := ConvertBodyToVector(result.Body)
-		if err != nil {
-			return errors.New("failed to convert body to vector from (CLIP) model")
-		}
-		embedding = Normalize(embedding)
 
 		next_action := VOICE_OVER
 		if previousEmbedding != nil {
@@ -123,19 +142,19 @@ func processMessage() error {
 			go writeBack(NOTHING, "")
 			return nil
 		case REINDEX:
-			jsonData, err := ReindexImage(incomingMessage.Payload)
+			_, err := ReindexImage(incomingMessage.Payload)
 			if err != nil {
 				log.Println(err)
 			}
 
-			go writeBack(REINDEX, string(jsonData))
+			// go writeBack(REINDEX, string(jsonData))
 			return nil
 		case VOICE_OVER:
-			jsonData, err := ReindexImage(incomingMessage.Payload)
+			_, err := ReindexImage(incomingMessage.Payload)
 			if err != nil {
 				log.Println(err)
 			}
-			go writeBack(REINDEX, string(jsonData))
+			// go writeBack(REINDEX, string(jsonData))
 			voiceMessage := ImageDescription(incomingMessage.Payload)
 			go writeBack(VOICE_OVER, voiceMessage)
 			return nil
