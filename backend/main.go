@@ -54,9 +54,17 @@ var previousEmbedding []float64 = nil
 var conn *websocket.Conn
 
 func writeBack(message string, payload string) {
-	// m := "test"
-
-	// conn.WriteMessage(messageType, m)
+	switch message {
+	case VOICE_OVER:
+		// send a voiceover
+		err := conn.WriteJSON(MessageContents{
+			Type:    VOICE_OVER,
+			Payload: payload,
+		})
+		if err != nil {
+			log.Println(err)
+		}
+	}
 }
 
 func processMessage() error {
