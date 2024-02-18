@@ -57,7 +57,7 @@ class ClientSocket: WebSocketDelegate {
                         let height = box.height / 2
                         let newX = x - width / 2
                         let screenHeight = NSScreen.main?.frame.height ?? 1120
-                        let newY = screenHeight - y - width / 2 - height * 1.5
+                        let newY = screenHeight - y - 50 - height * 1.5
                         screenPainter.addOverlay(x: newX, y: newY, height: height + 50, width: width, number: i, caption: box.text)
                         i += 1
                     }
