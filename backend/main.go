@@ -150,18 +150,6 @@ func processMessage() error {
 	}
 
 	switch incomingMessage.Type {
-	case REINDEX:
-		startTime := time.Now()
-		// predictions, err := ReindexImage(incomingMessage.Payload)
-		// if err != nil {
-		// 	log.Println(err)
-		// }
-
-		// tagImageBoxes(incomingMessage.Payload, predictions)
-		elapsedTime := time.Since(startTime)
-		fmt.Printf("The function took %s to execute.\n", elapsedTime)
-
-		return nil
 	case SCREENSHOT:
 		log.Print("Received screenshot")
 
@@ -190,7 +178,16 @@ func processMessage() error {
 			go writeBack(NOTHING, "")
 			return nil
 		case REINDEX:
-			// go ReindexImage(incomingMessage.Payload)
+			startTime := time.Now()
+			// predictions, err := ReindexImage(incomingMessage.Payload)
+			// if err != nil {
+			// 	log.Println(err)
+			// }
+
+			// tagImageBoxes(incomingMessage.Payload, predictions)
+			elapsedTime := time.Since(startTime)
+			fmt.Printf("The function took %s to execute.\n", elapsedTime)
+
 			return nil
 		case VOICE_OVER:
 			// go ReindexImage(incomingMessage.Payload)
