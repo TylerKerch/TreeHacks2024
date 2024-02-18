@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 )
@@ -77,6 +78,9 @@ func GetQueryNextStep(args QueryNextStepContext) QueryStep {
 	if err != nil {
 		return QueryStep{Err: errors.New("error reading from IO")}
 	}
+
+	log.Println(string(body))
+
 	type ApiResponse struct {
 		Choices []struct {
 			Message struct {
