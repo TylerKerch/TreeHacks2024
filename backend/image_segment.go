@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"image"
 	"io"
 	"net/http"
+
 	// "image/jpeg"
 	// "log"
 	"strings"
@@ -44,16 +46,29 @@ func cropImage(img image.Image, rect image.Rectangle) (image.Image, error) {
 	return croppedImg, nil
 }
 
-// Define a struct that matches the expected JSON payload structure
-type Payload struct {
+type TagBoxesPayload struct {
 	ImageBase64 string       `json:"image_base64"`
 	TextQuery   string       `json:"text_query"`
 	Predictions []Prediction `json:"predictions"`
 }
 
-func tagImageBoxes(b64image string, predictions []Prediction) {
+type TagBoxesResponse struct {
+	Predictions []CLIPPrediction `json:"predictions"`
+}
+
+type CLIPPrediction struct {
+	X      float64 `json:"x"`
+	Y      float64 `json:"y"`
+	Width  float64 `json:"width"`
+	Height float64 `json:"height"`
+	Class  string  `json:"class"`
+	DetectionId  int  `json:"detection_id"`
+	Similarity  string  `json:"similarity"`
+}
+
+func tagImageBoxes(b64image string, predictions []Prediction) ([]CLIPPrediction, error) {
 	// Construct the payload
-	payload := Payload{
+	payload := TagBoxesPayload {
 		ImageBase64: b64image,
 		TextQuery:   "Where is the search bar?",
 		Predictions: predictions,
@@ -63,14 +78,14 @@ func tagImageBoxes(b64image string, predictions []Prediction) {
 	jsonData, err := json.Marshal(payload)
 	if err != nil {
 		fmt.Println("Error marshaling JSON:", err)
-		return
+		return nil, errors.New(err.Error())
 	}
 
 	// Make the HTTP POST request
 	resp, err := http.Post("http://localhost:8081/process-image", "application/json", bytes.NewBuffer(jsonData))
 	if err != nil {
 		fmt.Println("Error making request:", err)
-		return
+		return nil, errors.New(err.Error())
 	}
 	defer resp.Body.Close()
 
@@ -78,10 +93,19 @@ func tagImageBoxes(b64image string, predictions []Prediction) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error reading response body:", err)
-		return
+		return nil, errors.New(err.Error())
 	}
 
-	fmt.Println("Response:", string(body))
+	
+	var tags TagBoxesResponse
+	err = json.Unmarshal(body, &tags)
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+	
+	fmt.Println("Response:", len(tags.Predictions))
+	return tags.Predictions, nil
+
 
 	// Decode the base64 image
 	// img, err := decodeBase64Image(b64image)

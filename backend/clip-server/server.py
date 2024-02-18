@@ -103,7 +103,7 @@ def process_image():
         sorted_predictions = sorted(predictions, key=lambda x: x['similarity'], reverse=True)
         print(sorted_predictions)
 
-        return jsonify(sorted_predictions)
+        return jsonify({'predictions': sorted_predictions})
 
     except Exception as e:
         return str(e), 500
