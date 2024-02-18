@@ -14,7 +14,7 @@ class ScreenPainter {
     
     func addOverlay(x: Int, y: Int, height: Int, width: Int, number: Int, caption: String) {
 //      let screenRect = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 800, height: 600)
-        let windowRect = NSRect(x: x, y: y, width: width, height: height)
+         let windowRect = NSRect(x: x, y: y, width: width, height: height)
         
         // Initialize the overlay window and the drawing view
         let overlayWindow = OverlayWindow(contentRect: windowRect, styleMask: .borderless, backing: .buffered, defer: false)

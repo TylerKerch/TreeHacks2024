@@ -36,7 +36,7 @@ class ClientSocket: WebSocketDelegate {
             print("websocket is disconnected: \(reason) with code: \(code)")
         case .text(let string):
         
-            print("Received text: \(string)")
+//            print("Received text: \(string)")
             guard let data = string.data(using: .utf8) else { return }
             do {
                 let genericResponse = try JSONDecoder().decode(SocketModels.GenericResponse.self, from: data)

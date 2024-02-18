@@ -9,6 +9,7 @@ require (
 	github.com/campoy/embedmd v1.0.0 // indirect
 	github.com/danlock/gogosseract v0.0.11-0ad3421 // indirect
 	github.com/danlock/pkg v0.0.17-a9828f2 // indirect
+	github.com/disintegration/imaging v1.6.2 // indirect
 	github.com/go-fonts/liberation v0.3.2 // indirect
 	github.com/go-latex/latex v0.0.0-20231108140139-5c1ce85aa4ea // indirect
 	github.com/go-pdf/fpdf v0.9.0 // indirect

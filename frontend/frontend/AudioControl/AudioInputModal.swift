@@ -3,7 +3,7 @@ import AppKit
 class GifWindowController: NSWindowController {
     convenience init() {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 300, height: 300),
+            contentRect: NSRect(x: 0, y: 0, width: 200, height: 200),
             styleMask: [.borderless],
             backing: .buffered,
             defer: false
@@ -73,7 +73,7 @@ class GifViewController: NSViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.widthAnchor.constraint(equalToConstant: 300).isActive = true
-        view.heightAnchor.constraint(equalToConstant: 300).isActive = true
+        view.widthAnchor.constraint(equalToConstant: 200).isActive = true
+        view.heightAnchor.constraint(equalToConstant: 200).isActive = true
     }
 }
