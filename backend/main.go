@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	// "io"
 	"log"
@@ -37,8 +38,8 @@ type MessageContents struct {
 const (
 	SCREENSHOT           = "IMAGE"
 	QUERY                = "QUERY"
-	CLEAR_BOUNDING_BOXES = "C"
-	VOICE_OVER           = "VOICE"
+	CLEAR_BOUNDING_BOXES = "CLEAR"
+	VOICE_OVER           = "SPEAK"
 	DRAW_BOXES           = "DRAW"
 
 	// Internal
@@ -92,7 +93,7 @@ func processMessage(conn *websocket.Conn) error {
 			return err
 		}
 
-		// startTime := time.Now()
+		startTime := time.Now()
 
 		result, err := sagemakerClient.InvokeEndpoint(&sagemakerruntime.InvokeEndpointInput{
 			Body:         decodedBytes,
@@ -103,8 +104,8 @@ func processMessage(conn *websocket.Conn) error {
 			return errors.New("failed to call Sagemaker (CLIP) endpoint")
 		}
 
-		// elapsedTime := time.Since(startTime)
-		// fmt.Printf("The function took %s to execute.\n", elapsedTime)
+		elapsedTime := time.Since(startTime)
+		fmt.Printf("The function took %s to execute.\n", elapsedTime)
 
 		log.Println("Request finished")
 
