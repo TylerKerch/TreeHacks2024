@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"time"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -194,6 +193,10 @@ func main() {
 	sagemakerClient = sagemakerruntime.New(sess)
 
 	ocrSetUp(ctx)
+
+	imagePath := "image2.png" // Replace with the path to your image
+	base64String, _ := ConvertImageToBase64(imagePath)
+	textRecognition(ctx, base64String)
 	http.HandleFunc("/ws", handleWebSocket)
 	var uri = fmt.Sprintf("localhost:%d", PORT)
 
