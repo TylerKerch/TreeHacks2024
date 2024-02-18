@@ -12,6 +12,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var hotKeyScreenReader: HotKey?
     var hotKeyVoiceRecorder: HotKey?
     var hotKeyTextReader: HotKey?
+    
+    var gifWindowController: GifWindowController?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Initialize the menu bar controller when the app finishes launching
@@ -34,12 +36,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         hotKeyVoiceRecorder = HotKey(key: .grave, modifiers: [])
         hotKeyVoiceRecorder?.keyDownHandler = {
             self.voiceRecorder.startRecording()
+            
+            if self.gifWindowController == nil {
+                self.gifWindowController = GifWindowController()
+            }
+            self.gifWindowController?.showWindow(nil)
         }
         hotKeyVoiceRecorder?.keyUpHandler = {
             self.voiceRecorder.stopRecording()
             // Fill in API logic to fetch string
-            self.textReader.readText(s: "I CAN HELP YOU WITH THAT OLD MAN")
+//            self.textReader.readText(s: "I CAN HELP YOU WITH THAT OLD MAN")
+            self.gifWindowController?.close()
+            self.gifWindowController = nil
         }
+        
+        preloadGif()
     }
     
     func applicationWillTerminate(_ aNotification: Notification) {

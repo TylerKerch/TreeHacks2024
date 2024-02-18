@@ -20,6 +20,7 @@ class ScreenPainter {
         let overlayWindow = OverlayWindow(contentRect: windowRect, styleMask: .borderless, backing: .buffered, defer: false)
         let drawingView = DrawingView(frame: windowRect)
         
+        
         // Set the custom view as the window's content view
         overlayWindow.contentView = drawingView
         drawingView.circleText = String(number)
