@@ -13,10 +13,12 @@ class ClientSocket: WebSocketDelegate {
     var socket: WebSocket!
     var screenPainter: ScreenPainter!
     var textSpeaker: TextSpeaker!
+    var cursorController: CursorController!
     
-    init(painter: ScreenPainter, speaker: TextSpeaker) {
+    init(painter: ScreenPainter, speaker: TextSpeaker, cursor: CursorController) {
         screenPainter = painter
         textSpeaker = speaker
+        cursorController = cursor
         setupSocket()
     }
     
@@ -64,6 +66,7 @@ class ClientSocket: WebSocketDelegate {
                     var i = 1
                     let boxes = drawResponse.payload
                     print("BOXES")
+                    cursorController.matrix = CursorController.createMatrix()
                     for box in boxes {
                         let x = box.x / 2
                         let y = box.y / 2
@@ -72,8 +75,8 @@ class ClientSocket: WebSocketDelegate {
                         let newX = x - width / 2
                         let screenHeight = NSScreen.main?.frame.height ?? 1120
                         let newY = screenHeight - y - height * 0.5
-                        screenPainter.addOverlay(x: newX, y: newY, height: height, width: width, number: 0, caption: "")
-                        
+//                        screenPainter.addOverlay(x: newX, y: newY, height: height, width: width, number: 0, caption: "")
+                        cursorController.addBoundingBox(x: newX, y: newY, height: height, width: width, id: box.detection_id)
                         i += 1
                     }
                 

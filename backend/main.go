@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -40,6 +41,7 @@ const (
 	VOICE_OVER           = "SPEAK"
 	SELECT_BOX           = "SELECT"
 	BOUNDING_BOXES       = "BOXES"
+	HOVER				 = "HOVER"
 
 	// Internal
 	REINDEX = "REI"
@@ -211,6 +213,35 @@ func processMessage() error {
 				}
 			}
 		}()
+	case HOVER:
+		dims := incomingMessage.Payload
+		parts := strings.Split(dims, " ")
+		// Assuming the string is always correctly formatted,
+		// convert each part to a float64
+		x, err := strconv.ParseFloat(parts[0], 64)
+		if err != nil {
+			fmt.Println("Error converting x:", err)
+			return nil
+		}
+		y, err := strconv.ParseFloat(parts[1], 64)
+		if err != nil {
+			fmt.Println("Error converting y:", err)
+			return nil
+		}
+		width, err := strconv.ParseFloat(parts[2], 64)
+		if err != nil {
+			fmt.Println("Error converting width:", err)
+			return nil
+		}
+		height, err := strconv.ParseFloat(parts[3], 64)
+		if err != nil {
+			fmt.Println("Error converting height:", err)
+			return nil
+		}
+		imageBase64 := base64.StdEncoding.EncodeToString(previous_image)
+		selectedCropped := cropImageBase64(imageBase64, x, y, width, height)
+		voiceCommand := subImageDescription(imageBase64, selectedCropped)
+		writeBack(VOICE_OVER, voiceCommand)
 	}
 
 	return err

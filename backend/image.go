@@ -211,7 +211,9 @@ func ReindexImage(payload string) ([]BoundingBox, error) {
 		log.Println(err)
 	}
 	fmt.Println("HELLO")
-	writeBack(BOUNDING_BOXES, string(boundingBoxesJSON))
-	boundingBoxes = data.BoundingBoxes
+	if boundingBoxesJSON != nil {
+		writeBack(BOUNDING_BOXES, string(boundingBoxesJSON))
+		boundingBoxes = data.BoundingBoxes
+	}
 	return data.BoundingBoxes, nil
 }
