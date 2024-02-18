@@ -12,6 +12,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var hotKeyScreenReader: HotKey?
     var hotKeyVoiceRecorder: HotKey?
     var hotKeyTextReader: HotKey?
+    
+    var gifWindowController: GifWindowController?
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         // Initialize the menu bar controller when the app finishes launching
@@ -26,20 +28,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         hotKeyScreenReader = HotKey(key: .k, modifiers: [.command, .shift])
         hotKeyScreenReader?.keyDownHandler = {
-            self.screenPainter.addOverlay(x: 50, y: 50, height: 200, width: 200, text: "1")
-            self.screenPainter.addOverlay(x: 450, y: 450, height: 200, width: 200, text: "2")
-            self.screenPainter.addOverlay(x: 850, y: 850, height: 200, width: 200, text: "3")
+            self.screenPainter.addOverlay(x: 50, y: 50, height: 200, width: 500, number: 1, caption: "Print Icon")
+            self.screenPainter.addOverlay(x: 450, y: 450, height: 200, width: 500, number: 2, caption: "Save Icon")
+            self.screenPainter.addOverlay(x: 850, y: 850, height: 200, width: 500, number: 3, caption: "Eat chicken rice")
         }
         
         hotKeyVoiceRecorder = HotKey(key: .grave, modifiers: [])
         hotKeyVoiceRecorder?.keyDownHandler = {
             self.voiceRecorder.startRecording()
+            
+            if self.gifWindowController == nil {
+                self.gifWindowController = GifWindowController()
+            }
+            self.gifWindowController?.showWindow(nil)
         }
         hotKeyVoiceRecorder?.keyUpHandler = {
             self.voiceRecorder.stopRecording()
             // Fill in API logic to fetch string
-            self.textReader.readText(s: "I CAN HELP YOU WITH THAT OLD MAN")
+//            self.textReader.readText(s: "I CAN HELP YOU WITH THAT OLD MAN")
+            self.gifWindowController?.close()
+            self.gifWindowController = nil
         }
+        
+        preloadGif()
     }
     
     func applicationWillTerminate(_ aNotification: Notification) {

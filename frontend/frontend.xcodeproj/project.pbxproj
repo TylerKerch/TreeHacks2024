@@ -17,6 +17,9 @@
 		7E379F4D2B816DCD00E62BA3 /* HotKey in Frameworks */ = {isa = PBXBuildFile; productRef = 7E379F4C2B816DCD00E62BA3 /* HotKey */; };
 		7E379F502B8171C900E62BA3 /* VoiceRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E379F4F2B8171C900E62BA3 /* VoiceRecorder.swift */; };
 		7E379F522B81747C00E62BA3 /* ScreenPainter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E379F512B81747C00E62BA3 /* ScreenPainter.swift */; };
+		7E379F542B819A1700E62BA3 /* AudioInputModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E379F532B819A1700E62BA3 /* AudioInputModal.swift */; };
+		7E379F562B819C4000E62BA3 /* AudioInput.gif in Resources */ = {isa = PBXBuildFile; fileRef = 7E379F552B819C4000E62BA3 /* AudioInput.gif */; };
+		7E379F582B819CFA00E62BA3 /* NSImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E379F572B819CFA00E62BA3 /* NSImageView.swift */; };
 		FF8E5A122B817AA900E2A668 /* TextReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF8E5A112B817AA900E2A668 /* TextReader.swift */; };
 /* End PBXBuildFile section */
 
@@ -33,6 +36,9 @@
 		7E379F482B81506300E62BA3 /* CursorController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorController.swift; sourceTree = "<group>"; };
 		7E379F4F2B8171C900E62BA3 /* VoiceRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceRecorder.swift; sourceTree = "<group>"; };
 		7E379F512B81747C00E62BA3 /* ScreenPainter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenPainter.swift; sourceTree = "<group>"; };
+		7E379F532B819A1700E62BA3 /* AudioInputModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioInputModal.swift; sourceTree = "<group>"; };
+		7E379F552B819C4000E62BA3 /* AudioInput.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = AudioInput.gif; sourceTree = "<group>"; };
+		7E379F572B819CFA00E62BA3 /* NSImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NSImageView.swift; sourceTree = "<group>"; };
 		FF8E5A112B817AA900E2A668 /* TextReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextReader.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -67,6 +73,7 @@
 		7E379F302B814E8000E62BA3 /* frontend */ = {
 			isa = PBXGroup;
 			children = (
+				7E379F552B819C4000E62BA3 /* AudioInput.gif */,
 				7E379F4E2B8171A800E62BA3 /* AudioControl */,
 				7E379F472B81505200E62BA3 /* CursorControl */,
 				7E379F442B81503C00E62BA3 /* ScreenReader */,
@@ -119,6 +126,8 @@
 			children = (
 				7E379F4F2B8171C900E62BA3 /* VoiceRecorder.swift */,
 				FF8E5A112B817AA900E2A668 /* TextReader.swift */,
+				7E379F532B819A1700E62BA3 /* AudioInputModal.swift */,
+				7E379F572B819CFA00E62BA3 /* NSImageView.swift */,
 			);
 			path = AudioControl;
 			sourceTree = "<group>";
@@ -187,6 +196,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7E379F562B819C4000E62BA3 /* AudioInput.gif in Resources */,
 				7E379F362B814E8200E62BA3 /* Assets.xcassets in Resources */,
 				7E379F392B814E8200E62BA3 /* Main.storyboard in Resources */,
 			);
@@ -200,11 +210,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				7E379F462B81504700E62BA3 /* ScreenReader.swift in Sources */,
+				7E379F542B819A1700E62BA3 /* AudioInputModal.swift in Sources */,
 				7E379F342B814E8000E62BA3 /* ViewController.swift in Sources */,
 				7E379F502B8171C900E62BA3 /* VoiceRecorder.swift in Sources */,
 				7E379F492B81506300E62BA3 /* CursorController.swift in Sources */,
 				7E379F432B814FDE00E62BA3 /* MenuBarController.swift in Sources */,
 				7E379F522B81747C00E62BA3 /* ScreenPainter.swift in Sources */,
+				7E379F582B819CFA00E62BA3 /* NSImageView.swift in Sources */,
 				FF8E5A122B817AA900E2A668 /* TextReader.swift in Sources */,
 				7E379F322B814E8000E62BA3 /* AppDelegate.swift in Sources */,
 			);
