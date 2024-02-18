@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -54,12 +55,12 @@ const (
 var sess *session.Session
 var sagemaker_client *sagemakerruntime.SageMakerRuntime
 var previous_embedding []float64 = nil
-var previous_action string
 var conn *websocket.Conn
 var current_screen_image string
 
-var current_global_query string        // reset me on new query
-var step_channel chan (bool) = nil     // reset me on new query
+var current_global_query string    // reset me on new query
+var step_channel chan (bool) = nil // reset me on new query
+var difference_detected chan (bool) = make(chan bool, 1)
 var current_step_count = 0             // reset me on new query
 var current_context_window string = "" // reset me on new query
 
@@ -128,7 +129,11 @@ func processMessage() error {
 		}
 
 		previous_embedding = embedding
-		previous_action = next_action
+
+		// If we're waiting for a subquery, we can't do anything else.
+		if next_action != NOTHING {
+			difference_detected <- true
+		}
 
 		switch next_action {
 		case NOTHING:
@@ -160,10 +165,7 @@ func processMessage() error {
 				case <-step_channel:
 					return
 				default:
-					if previous_action == NOTHING {
-						time.Sleep(1 * time.Second)
-						continue
-					}
+					<-difference_detected
 
 					// Event loop
 					nextStep := GetQueryNextStep(QueryNextStepContext{
@@ -186,7 +188,6 @@ func processMessage() error {
 					writeBack(VOICE_OVER, nextStep.Audio)
 					current_context_window += "\n" + nextStep.Text
 					current_step_count++
-					// log.Println(current_context_window)
 				}
 			}
 		}()
