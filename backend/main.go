@@ -165,7 +165,6 @@ func processMessage() error {
 
 		current_global_query = incomingMessage.Payload
 		step_channel = make(chan bool)
-		difference_detected = make(chan bool, 1)
 		current_step_count = 0
 		UpdateContextWindow(current_global_query)
 
