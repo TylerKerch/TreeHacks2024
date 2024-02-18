@@ -8,7 +8,7 @@
 import Foundation
 import AVFoundation
 
-class TextReader {
+class TextSpeaker {
     
     private let speechSynthesizer = AVSpeechSynthesizer()
     

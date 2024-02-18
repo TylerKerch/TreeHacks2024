@@ -90,12 +90,12 @@ class VoiceRecorder {
         }
     }
     
-    func stopRecording() {
-        print("Final transcription:\n \(finalTranscription)")
+    func stopRecording() -> String {
         audioEngine.stop()
         audioEngine.inputNode.removeTap(onBus: 0)
         recognitionRequest?.endAudio()
         recognitionTask?.cancel()
         print("Finished recording")
+        return finalTranscription
     }
 }

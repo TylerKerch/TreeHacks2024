@@ -1,0 +1,23 @@
+{
+  "pins" : [
+    {
+      "identity" : "hotkey",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/soffes/HotKey",
+      "state" : {
+        "branch" : "main",
+        "revision" : "4d02d80de143d69b7eeb5962729591a157a57ede"
+      }
+    },
+    {
+      "identity" : "starscream",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/daltoniam/Starscream.git",
+      "state" : {
+        "revision" : "ac6c0fc9da221873e01bd1a0d4818498a71eef33",
+        "version" : "4.0.6"
+      }
+    }
+  ],
+  "version" : 2
+}
