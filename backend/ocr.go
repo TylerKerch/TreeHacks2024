@@ -1,7 +1,6 @@
 package main
 
-
-import(
+import (
 	"bytes"
 	"context"
 	"encoding/base64"
@@ -45,7 +44,7 @@ func hOCRToText(hocrData string) (string, error) {
 
 func textRecognition(ctx context.Context, base64String string) string {
 	data, _ := base64.StdEncoding.DecodeString(base64String)
-    reader := bytes.NewReader(data)
+	reader := bytes.NewReader(data)
 	hocr, _ := pool.ParseImage(ctx, reader, gogosseract.ParseImageOptions{
 		IsHOCR: true,
 	})
@@ -61,7 +60,6 @@ func ocrSetUp(ctx context.Context) {
 		Language:     "eng",
 		TrainingData: trainingDataFile,
 	}
-
 
 	// Create 10 Tesseract instances that can process image requests concurrently.
 	pool, _ = gogosseract.NewPool(ctx, 10, gogosseract.PoolConfig{Config: cfg})
