@@ -31,7 +31,6 @@ def process_image():
     image_base64 = data['image_base64']
     text_query = data['text_query']
     predictions = data['predictions']
-    print('here!')
 
     try:
         # Decode the Base64 encoded image
