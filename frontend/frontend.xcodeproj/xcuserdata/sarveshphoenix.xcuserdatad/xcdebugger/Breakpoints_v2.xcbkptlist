@@ -14,8 +14,8 @@
             filePath = "frontend/ServerConnection/ClientSocket.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "66"
-            endingLineNumber = "66"
+            startingLineNumber = "38"
+            endingLineNumber = "38"
             landmarkName = "didReceive(event:client:)"
             landmarkType = "7">
          </BreakpointContent>

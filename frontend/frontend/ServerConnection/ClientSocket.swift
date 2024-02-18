@@ -19,36 +19,8 @@ class ClientSocket: WebSocketDelegate {
         textSpeaker = speaker
     }
     
-    struct UIBoxesRequest: Encodable {
-        let imageBase64: String
-        let query: String
-
-        enum CodingKeys: String, CodingKey {
-            case imageBase64 = "image"
-        }
-    }
-    struct UIBoxesResponse: Decodable {
-        let boundingBoxes: [BoundingBox]
-            
-        enum CodingKeys: String, CodingKey {
-            case boundingBoxes = "boxes"
-        }
-        
-        struct BoundingBox: Decodable {
-            let x: Int
-            let y: Int
-            let width: Int
-            let height: Int
-            let text: String
-        }
-    }
-    
-    struct ImageDescriptionRequest: Encodable {
-        
-    }
-    
     init() {
-        var request = URLRequest(url: URL(string: "http://localhost:8080")!) // Switch to ws potentially
+        var request = URLRequest(url: URL(string: "ws://localhost:8080")!)
         request.timeoutInterval = 5
         socket = WebSocket(request: request)
         socket.delegate = self
@@ -64,22 +36,28 @@ class ClientSocket: WebSocketDelegate {
         case .text(let string):
         
             print("Received text: \(string)")
-            if let data = string.data(using: .utf8) {
-                do {
-                    let response = try JSONDecoder().decode(UIBoxesResponse.self, from: data)
+            guard let data = string.data(using: .utf8) else { return }
+            do {
+                let genericResponse = try JSONDecoder().decode(SocketModels.GenericResponse.self, from: data)
+                switch genericResponse.type {
+                case "CLEAR":
+                    // RECEIVED A JSON MESSAGE TO CLEAR BOXES
+                    screenPainter.clearHighlights()
+                case "DRAW":
+                    let drawResponse = try JSONDecoder().decode(SocketModels.DrawBoxesResponse.self, from: data)
                     var i = 1
-                    for box in response.boundingBoxes {
+                    for box in drawResponse.boundingBoxes {
                         screenPainter.addOverlay(x: box.x, y: box.y, height: box.height, width: box.width, number: i, caption: box.text)
                         i += 1
                     }
-                    
-                    textSpeaker.readText(s: "You have \(response.boundingBoxes.count) options.")
-                    for box in response.boundingBoxes {
-                        textSpeaker.readText(s: box.text)
-                    }
-                } catch {
-                    print("Error parsing UIBoxesResponse: \(error)")
+                case "SPEAK":
+                    let speakResponse = try JSONDecoder().decode(SocketModels.TextSpeechResponse.self, from: data)
+                    textSpeaker.readText(s: speakResponse.message)
+                default:
+                    print("Unknown type")
                 }
+            } catch {
+                print("Error decoding JSON: \(error)")
             }
         
         case .binary(let data):
@@ -93,8 +71,8 @@ class ClientSocket: WebSocketDelegate {
         }
     }
     
-    func sendUIBoxesRequest(imageBase64: String, query: String) {
-        let request = UIBoxesRequest(imageBase64: imageBase64, query: query)
+    func sendPacket(type: String, s: String) {
+        let request = SocketModels.ClientPacket(type: type, payload: s)
         do {
             let requestData = try JSONEncoder().encode(request)
             let requestString = String(data: requestData, encoding: .utf8)!
@@ -104,7 +82,7 @@ class ClientSocket: WebSocketDelegate {
                 print("Socket hasn't been constructed properly")
             }
         } catch {
-            print("Error encoding UIBoxesRequest: \(error)")
+            print("Error encoding QueryRequest: \(error)")
         }
     }
     
