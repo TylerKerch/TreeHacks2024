@@ -55,7 +55,7 @@ var conn *websocket.Conn
 
 func writeBack(message string, payload string) {
 	err := conn.WriteJSON(MessageContents{
-		Type:    NOTHING,
+		Type:    message,
 		Payload: payload,
 	})
 	if err != nil {
@@ -123,10 +123,10 @@ func processMessage() error {
 			go writeBack(NOTHING, "")
 			return nil
 		case REINDEX:
-			go ReindexImage(incomingMessage.Payload)
+			// go ReindexImage(incomingMessage.Payload)
 			return nil
 		case VOICE_OVER:
-			go ReindexImage(incomingMessage.Payload)
+			// go ReindexImage(incomingMessage.Payload)
 			voiceMessage := ImageDescription(incomingMessage.Payload)
 			go writeBack(VOICE_OVER, voiceMessage)
 			return nil
@@ -144,9 +144,9 @@ func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		return
 	}
-	defer connection.Close()
 
 	conn = connection
+	defer connection.Close()
 
 	for {
 		err = processMessage()
@@ -165,8 +165,9 @@ func main() {
 
 	var access_token = os.Getenv("ACCESS_TOKEN")
 	var secret_access_token = os.Getenv("SECRET_ACCESS_TOKEN")
+	var openai_api_key = os.Getenv("OPEN_AI_API_KEY")
 
-	if access_token == "" || secret_access_token == "" {
+	if access_token == "" || secret_access_token == "" || openai_api_key == "" {
 		panic("Environment variable(s) missing")
 	}
 
